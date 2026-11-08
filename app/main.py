@@ -67,12 +67,14 @@ def main():
     demo = build_app_ui()
     logger.info(f"Starting VoiceStudio AI Web Studio at http://{args.host}:{args.port}")
     import gradio as gr
+    from app.ui.styles import IPHONE_INSPIRED_CSS
     theme = gr.themes.Soft(primary_hue="blue", secondary_hue="slate")
     demo.launch(
         server_name=args.host,
         server_port=args.port,
         share=False,
-        theme=theme
+        theme=theme,
+        css=IPHONE_INSPIRED_CSS
     )
 
 if __name__ == "__main__":

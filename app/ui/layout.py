@@ -10,7 +10,7 @@ from app.ui.styles import IPHONE_INSPIRED_CSS
 
 def build_app_ui() -> gr.Blocks:
     """Builds and returns the main VoiceStudio AI Gradio interface."""
-    with gr.Blocks(title="VoiceStudio AI — Studio Edition", css=IPHONE_INSPIRED_CSS) as demo:
+    with gr.Blocks(title="VoiceStudio AI — Studio Edition") as demo:
         with gr.Column(elem_classes=["app-header"]):
             gr.Markdown(
                 """

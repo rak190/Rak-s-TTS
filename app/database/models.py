@@ -49,3 +49,37 @@ class QueueJob:
     created_at: str = field(default_factory=utc_iso_now)
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+
+@dataclass
+class LongformJob:
+    id: str
+    title: str
+    voice_profile_id: Optional[str] = None
+    voice_name: str = "Default Voice"
+    mode: str = "tts"
+    language: str = "multilingual"
+    total_chunks: int = 0
+    completed_chunks: int = 0
+    status: str = "pending"  # pending, processing, paused, completed, failed, cancelled
+    output_wav_path: Optional[str] = None
+    output_mp3_path: Optional[str] = None
+    total_duration_sec: float = 0.0
+    total_generation_time_sec: float = 0.0
+    created_at: str = field(default_factory=utc_iso_now)
+    updated_at: str = field(default_factory=utc_iso_now)
+
+@dataclass
+class LongformChunkRecord:
+    id: str
+    job_id: str
+    chunk_index: int
+    text: str
+    char_count: int
+    pause_after_ms: int = 300
+    status: str = "pending"  # pending, processing, completed, failed
+    output_wav_path: Optional[str] = None
+    duration_sec: float = 0.0
+    generation_time_sec: float = 0.0
+    error_message: str = ""
+    created_at: str = field(default_factory=utc_iso_now)
+    completed_at: Optional[str] = None

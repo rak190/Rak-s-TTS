@@ -7,7 +7,13 @@ from typing import List, Optional, Tuple, Dict, Any
 
 from app.config import DB_PATH
 from app.database.schema import initialize_database
-from app.database.models import VoiceProfile, GenerationRecord, QueueJob
+from app.database.models import (
+    VoiceProfile,
+    GenerationRecord,
+    QueueJob,
+    LongformJob,
+    LongformChunkRecord
+)
 
 class DatabaseManager:
     """Thread-safe SQLite connection and repository manager."""
@@ -215,3 +221,124 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,))
             return [QueueJob(**dict(row)) for row in cursor.fetchall()]
+
+    # -------------------------------------------------------------
+    # Long-Form Jobs & Chunks Repository (Stage 4)
+    # -------------------------------------------------------------
+    def create_longform_job(self, job: LongformJob) -> LongformJob:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO longform_jobs (
+                    id, title, voice_profile_id, voice_name, mode, language,
+                    total_chunks, completed_chunks, status, output_wav_path,
+                    output_mp3_path, total_duration_sec, total_generation_time_sec,
+                    created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    job.id, job.title, job.voice_profile_id, job.voice_name, job.mode,
+                    job.language, job.total_chunks, job.completed_chunks, job.status,
+                    job.output_wav_path, job.output_mp3_path, job.total_duration_sec,
+                    job.total_generation_time_sec, job.created_at, job.updated_at
+                )
+            )
+            return job
+
+    def get_longform_job(self, job_id: str) -> Optional[LongformJob]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM longform_jobs WHERE id = ?", (job_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return LongformJob(**dict(row))
+
+    def list_longform_jobs(self, limit: int = 50, offset: int = 0) -> List[LongformJob]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM longform_jobs ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (limit, offset)
+            )
+            return [LongformJob(**dict(row)) for row in cursor.fetchall()]
+
+    def update_longform_job(self, job: LongformJob) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE longform_jobs SET
+                    title = ?, voice_profile_id = ?, voice_name = ?, mode = ?,
+                    language = ?, total_chunks = ?, completed_chunks = ?,
+                    status = ?, output_wav_path = ?, output_mp3_path = ?,
+                    total_duration_sec = ?, total_generation_time_sec = ?,
+                    updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    job.title, job.voice_profile_id, job.voice_name, job.mode,
+                    job.language, job.total_chunks, job.completed_chunks,
+                    job.status, job.output_wav_path, job.output_mp3_path,
+                    job.total_duration_sec, job.total_generation_time_sec,
+                    job.updated_at, job.id
+                )
+            )
+            return cursor.rowcount > 0
+
+    def delete_longform_job(self, job_id: str) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM longform_jobs WHERE id = ?", (job_id,))
+            return cursor.rowcount > 0
+
+    def create_longform_chunks(self, chunks: List[LongformChunkRecord]) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.executemany(
+                """
+                INSERT INTO longform_chunks (
+                    id, job_id, chunk_index, text, char_count, pause_after_ms,
+                    status, output_wav_path, duration_sec, generation_time_sec,
+                    error_message, created_at, completed_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        c.id, c.job_id, c.chunk_index, c.text, c.char_count,
+                        c.pause_after_ms, c.status, c.output_wav_path,
+                        c.duration_sec, c.generation_time_sec, c.error_message,
+                        c.created_at, c.completed_at
+                    )
+                    for c in chunks
+                ]
+            )
+            return True
+
+    def get_longform_chunks(self, job_id: str) -> List[LongformChunkRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM longform_chunks WHERE job_id = ? ORDER BY chunk_index ASC",
+                (job_id,)
+            )
+            return [LongformChunkRecord(**dict(row)) for row in cursor.fetchall()]
+
+    def update_longform_chunk(self, chunk: LongformChunkRecord) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE longform_chunks SET
+                    status = ?, output_wav_path = ?, duration_sec = ?,
+                    generation_time_sec = ?, error_message = ?, completed_at = ?
+                WHERE id = ?
+                """,
+                (
+                    chunk.status, chunk.output_wav_path, chunk.duration_sec,
+                    chunk.generation_time_sec, chunk.error_message,
+                    chunk.completed_at, chunk.id
+                )
+            )
+            return cursor.rowcount > 0

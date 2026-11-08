@@ -208,11 +208,21 @@ def main():
     logger.info(f"Starting VoiceStudio Pro Web Studio at {app_url}")
     import gradio as gr
     from app.ui.styles import STUDIO_PRO_CSS
+    from app.ui.theme import theme_bootstrap_js
     demo.launch(
         server_name=args.host,
         server_port=args.port,
         share=False,
-        css=STUDIO_PRO_CSS
+        theme=gr.themes.Base(
+            primary_hue=gr.themes.colors.violet,
+            secondary_hue=gr.themes.colors.violet,
+            neutral_hue=gr.themes.colors.slate,
+            radius_size="md",
+            spacing_size="md",
+            font=["Segoe UI", "Inter", "sans-serif"]
+        ),
+        css=STUDIO_PRO_CSS,
+        js=theme_bootstrap_js(settings_svc.get_setting("theme", "system"))
     )
 
 

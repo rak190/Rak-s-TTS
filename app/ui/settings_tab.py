@@ -23,6 +23,7 @@ from app.database.backup import DatabaseBackupService
 from app.services.settings_service import SettingsService
 from app.services.voice_service import VoiceProfileService
 from app.utils.system_info import get_system_telemetry
+from app.ui.theme import save_theme_preference, theme_change_js
 
 logger = logging.getLogger(__name__)
 
@@ -305,6 +306,13 @@ def create_settings_tab():
                 pref_preload
             ],
             outputs=[prefs_status]
+        )
+
+        pref_theme.change(
+            fn=save_theme_preference,
+            inputs=[pref_theme],
+            outputs=[prefs_status],
+            js=theme_change_js()
         )
 
         open_gen_btn.click(fn=lambda: handle_open_folder("generated"), outputs=[folder_status])

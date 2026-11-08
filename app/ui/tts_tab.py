@@ -1,4 +1,4 @@
-"""
+﻿"""
 VoiceStudio Pro — Speech Studio UI Tab.
 Flagship ElevenLabs & Descript-inspired Creative Workspace:
 - Massive, distraction-free script canvas with Khmer & English typography.
@@ -231,147 +231,49 @@ def run_longform_synthesis(
 
 
 def create_tts_tab():
-    """Builds the VoiceStudio Pro ElevenLabs & Descript-inspired Flagship Studio."""
-    with gr.Tab("🔊 Speech Studio", id="tab_tts"):
-        # Top Workspace Header (ElevenLabs Project Header)
-        with gr.Row(elem_classes=["studio-canvas-card"]):
-            with gr.Column(scale=3):
-                gr.Markdown(
-                    """
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">Speech Studio</span>
-                        <span class="studio-pill studio-pill-accent">ElevenLabs Creative Workspace</span>
-                        <span class="studio-pill studio-pill-muted">48kHz AudioVAE V2</span>
-                    </div>
-                    """
-                )
-            with gr.Column(scale=2):
-                lang_live_badge = gr.Markdown(value="Waiting for text input... • 0 characters")
+    """Build the TTS workstation while keeping generation callbacks unchanged."""
+    profiles = get_available_profiles()
+    with gr.Tab("Speech Studio", id="tab_tts"):
+        gr.HTML("""<header class="tts-page-head"><div><div class="eyebrow">VOICESTUDIO / CREATE</div><h1>Speech Studio</h1><p>Shape a script, choose a voice, and listen to the result.</p></div><div class="local-status"><i></i> Local studio <span>·</span> 48 kHz</div></header>""")
+        with gr.Row(elem_classes=["tts-workspace"]):
+            with gr.Column(scale=8, min_width=480, elem_classes=["tts-editor-column"]):
+                with gr.Row(elem_classes=["project-row"]):
+                    project_title_input = gr.Textbox(label="Project", value="Untitled narration", placeholder="Name this narration", elem_classes=["project-title"])
+                    lang_live_badge = gr.Markdown(value="Waiting for script  ·  0 characters", elem_classes=["script-count"])
+                gr.HTML("<div class='editor-caption'><span>Script</span><span>English &nbsp; · &nbsp; Khmer</span></div>")
+                script_editor = gr.Textbox(label="", show_label=False, placeholder="Start writing or paste your narration here…\n\nYour script stays in focus while voice and delivery settings live beside it.", lines=15, elem_classes=["script-editor-canvas"])
+                with gr.Row(elem_classes=["editor-footer"]):
+                    workflow_mode_radio = gr.Radio(choices=["Standard", "Long-form"], value="Standard", label="Workflow", elem_classes=["workflow-mode"])
+                    chunk_analyze_btn = gr.Button("Preview chapters", variant="secondary", size="sm")
+                with gr.Accordion("Chapter preview", open=False, elem_classes=["chapter-preview"]):
+                    chunk_preview_box = gr.Markdown(value="Long-form preview will appear here.")
+                gr.HTML("<div class='section-divider'></div><div class='output-heading'><div><span class='eyebrow'>LISTEN BACK</span><h2>Audio output</h2></div><span class='output-note'>Generated audio appears here</span></div>")
+                main_audio_player = gr.Audio(label="", show_label=False, type="filepath", interactive=False, elem_classes=["studio-audio-output"])
+                with gr.Row(elem_classes=["audio-actions"]):
+                    mp3_download_file = gr.File(label="MP3 export", height=72, interactive=False, elem_classes=["mp3-export"])
+                    execution_status_badge = gr.Markdown(value="Ready when you are", elem_classes=["engine-status"])
+                    cancel_btn = gr.Button("Cancel", variant="secondary", size="sm")
+                telemetry_display = gr.Markdown(value="", elem_classes=["generation-details"])
 
-        # Two-Column Creative Workspace: Central Script Canvas + Right Contextual Inspector
-        with gr.Row():
-            # -------------------------------------------------------------
-            # COLUMN 1: Large Central Script Canvas & Waveform Audio Dock
-            # -------------------------------------------------------------
-            with gr.Column(scale=7):
-                with gr.Group(elem_classes=["studio-canvas-card"]):
-                    project_title_input = gr.Textbox(
-                        label="Project / Chapter Title",
-                        value="Chapter 1: VoiceStudio AI Overview",
-                        placeholder="e.g. Chapter 1: Introduction to VoiceStudio",
-                        interactive=True
-                    )
+            with gr.Column(scale=3, min_width=260, elem_classes=["tts-inspector"]):
+                gr.HTML("<div class='inspector-heading'><span class='eyebrow'>VOICE & DELIVERY</span><h2>Sound like you</h2></div><div class='voice-mark'><span>V</span><div><b>Voice profile</b><small>Choose a saved voice</small></div></div>")
+                profile_dropdown = gr.Dropdown(label="Voice", choices=profiles, value=profiles[0] if profiles else None)
+                refresh_profiles_btn = gr.Button("Refresh voices", variant="secondary", size="sm")
+                cloning_mode_selector = gr.Radio(choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"], value="Ordinary TTS", label="Generation mode")
+                gr.HTML("<div class='inspector-rule'></div><div class='eyebrow'>ADVANCED</div>")
+                with gr.Accordion("Voice controls", open=False):
+                    cfg_slider = gr.Slider(minimum=1.0, maximum=5.0, value=2.0, step=0.1, label="Guidance", info="Higher values follow the reference voice more closely.")
+                    steps_slider = gr.Slider(minimum=5, maximum=30, value=10, step=1, label="Inference steps")
+                generate_hero_btn = gr.Button("Generate speech", variant="primary", size="lg", elem_classes=["studio-btn-primary"])
+                longform_btn = gr.Button("Generate long-form", variant="primary", size="lg", visible=False, elem_classes=["studio-btn-primary"])
 
-                    script_editor = gr.Textbox(
-                        label="Script Editor (Khmer & English)",
-                        placeholder="Type or paste your Khmer or English script here for natural, expressive speech generation...",
-                        lines=12,
-                        elem_classes=["script-editor-canvas"]
-                    )
-
-                    with gr.Row():
-                        workflow_mode_radio = gr.Radio(
-                            choices=["⚡ Standard Speech", "📖 Long-Form Studio"],
-                            value="⚡ Standard Speech",
-                            label="Workflow Stage"
-                        )
-                        chunk_analyze_btn = gr.Button("🔍 Analyze Sentence Chunks", variant="secondary", size="sm")
-
-                    chunk_preview_box = gr.Markdown(
-                        value="*Click 'Analyze Sentence Chunks' when drafting long articles or audiobooks.*"
-                    )
-
-                # Signature Waveform & Audio Player Dock (Descript & Apple Music Style)
-                with gr.Group(elem_classes=["studio-canvas-card"]):
-                    gr.Markdown("#### 🎧 Studio Audio Playback & Waveform Timeline")
-                    
-                    with gr.Row():
-                        main_audio_player = gr.Audio(
-                            label="Master Audio Output (Studio 48kHz WAV)",
-                            type="filepath",
-                            interactive=False
-                        )
-                        mp3_download_file = gr.File(
-                            label="⬇️ Download MP3 (320kbps)",
-                            interactive=False
-                        )
-
-                    with gr.Row():
-                        execution_status_badge = gr.Label(label="Engine Status", value="Ready to generate.")
-                    
-                    telemetry_display = gr.Markdown(value="*Generation telemetry and RTF performance metrics will appear here after synthesis.*")
-
-            # -------------------------------------------------------------
-            # COLUMN 2: Contextual Right Inspector (ElevenLabs Style)
-            # -------------------------------------------------------------
-            with gr.Column(scale=3, min_width=280):
-                with gr.Group(elem_classes=["studio-inspector"]):
-                    gr.Markdown("### 🎛️ Voice & Model Inspector")
-
-                    # Speaker Identity
-                    with gr.Row(elem_classes=["speaker-avatar-card"]):
-                        gr.Markdown(
-                            """
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="speaker-avatar-badge">VS</div>
-                                <div>
-                                    <div style="font-size: 13.5px; font-weight: 600; color: var(--studio-text-primary);">Active Speaker</div>
-                                    <div style="font-size: 11.5px; color: var(--studio-text-secondary);">48,000 Hz Native Mono</div>
-                                </div>
-                            </div>
-                            """
-                        )
-
-                    profile_dropdown = gr.Dropdown(
-                        label="Speaker Voice Profile",
-                        choices=get_available_profiles(),
-                        value=get_available_profiles()[0] if get_available_profiles() else None
-                    )
-                    refresh_profiles_btn = gr.Button("🔄 Refresh Voice Profiles", variant="secondary", size="sm")
-
-                    cloning_mode_selector = gr.Radio(
-                        choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"],
-                        value="Ordinary TTS",
-                        label="Cloning Technique"
-                    )
-
-                    with gr.Accordion("⚙️ Acoustic & Diffusion Controls", open=True):
-                        cfg_slider = gr.Slider(
-                            minimum=1.0, maximum=5.0, value=2.0, step=0.1,
-                            label="CFG Guidance Scale",
-                            info="Higher values adhere tighter to prompt voice (Recommended: 2.0)"
-                        )
-                        steps_slider = gr.Slider(
-                            minimum=5, maximum=30, value=10, step=1,
-                            label="Inference Timesteps",
-                            info="Diffusion steps (10 is optimal for i5 CPU)"
-                        )
-
-                    # Primary Actions
-                    generate_hero_btn = gr.Button(
-                        "🎙️ Generate Speech",
-                        variant="primary",
-                        size="lg",
-                        elem_classes=["studio-btn-primary"]
-                    )
-                    cancel_btn = gr.Button("🛑 Cancel", variant="stop", size="sm")
-
-        # -------------------------------------------------------------
-        # Event Wiring
-        # -------------------------------------------------------------
         script_editor.change(fn=on_text_changed, inputs=[script_editor], outputs=[lang_live_badge])
+        workflow_mode_radio.change(
+            fn=lambda mode: (gr.update(visible=mode == "Standard"), gr.update(visible=mode == "Long-form")),
+            inputs=[workflow_mode_radio], outputs=[generate_hero_btn, longform_btn]
+        )
         refresh_profiles_btn.click(fn=lambda: gr.update(choices=get_available_profiles()), outputs=[profile_dropdown])
         cancel_btn.click(fn=cancel_current_generation, outputs=[execution_status_badge])
-
-        chunk_analyze_btn.click(
-            fn=analyze_longform_chunks,
-            inputs=[script_editor],
-            outputs=[chunk_preview_box]
-        )
-
-        # Standard Speech Generation
-        generate_hero_btn.click(
-            fn=run_tts_generation,
-            inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider],
-            outputs=[main_audio_player, execution_status_badge, telemetry_display]
-        )
+        chunk_analyze_btn.click(fn=analyze_longform_chunks, inputs=[script_editor], outputs=[chunk_preview_box])
+        generate_hero_btn.click(fn=run_tts_generation, inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, execution_status_badge, telemetry_display])
+        longform_btn.click(fn=run_longform_synthesis, inputs=[project_title_input, script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, mp3_download_file, execution_status_badge, telemetry_display])

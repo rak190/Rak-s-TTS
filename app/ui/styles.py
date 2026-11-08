@@ -186,63 +186,6 @@ textarea, input, p, span, div, td, th, label {
     padding: 0 !important;
 }
 
-/* Linear & macOS Segmented Tab Navigation Bar */
-.main-studio-tabs > .tab-nav {
-    display: flex !important;
-    align-items: center !important;
-    gap: 6px !important;
-    background: var(--studio-sidebar-bg) !important;
-    border-bottom: 1px solid var(--studio-border) !important;
-    padding: 8px 16px !important;
-    margin: 0 0 20px 0 !important;
-    border-radius: 0 !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-    overflow-x: auto !important;
-    white-space: nowrap !important;
-    border: none !important;
-    border-bottom: 1px solid var(--studio-border) !important;
-}
-
-/* Tab Navigation Buttons (Apple Segmented Pill / Linear Nav) */
-.main-studio-tabs > .tab-nav > button {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    padding: 8px 16px !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: 13.5px !important;
-    font-weight: 500 !important;
-    color: var(--studio-text-secondary) !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    transition: all 0.15s ease !important;
-    cursor: pointer !important;
-    white-space: nowrap !important;
-    margin: 0 !important;
-}
-
-.main-studio-tabs > .tab-nav > button:hover {
-    background: var(--studio-surface-hover) !important;
-    color: var(--studio-text-primary) !important;
-}
-
-.main-studio-tabs > .tab-nav > button.selected {
-    background: var(--studio-surface-elevated) !important;
-    color: var(--studio-text-primary) !important;
-    font-weight: 600 !important;
-    border: 1px solid var(--studio-border) !important;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
-    border-bottom: 2px solid var(--studio-accent) !important;
-}
-
-/* Main Workspace Canvas Container */
-.main-studio-tabs > div:not(.tab-nav) {
-    padding: 0 24px 32px 24px !important;
-    max-width: 1440px !important;
-    margin: 0 auto !important;
-    width: 100% !important;
-}
-
 /* --------------------------------------------------------------------------
    5. Elimination of Generic Blue Labels & Nested Box Clutter
    -------------------------------------------------------------------------- */
@@ -495,4 +438,114 @@ input:focus, textarea:focus, select:focus {
 """
 
 # Maintain backwards compatibility aliases
+IPHONE_INSPIRED_CSS = STUDIO_PRO_CSS
+
+STUDIO_PRO_CSS += r"""
+/* Stage 5C TTS workstation: compact navigation rail and writing-first canvas */
+.studio-app-header {
+  position: fixed !important; inset: 0 auto 0 0 !important; width: 218px !important;
+  z-index: 100 !important; display: flex !important; flex-direction: column !important;
+  justify-content: flex-start !important; align-items: flex-start !important;
+  padding: 25px 20px !important; border: 0 !important; border-right: 1px solid var(--studio-border) !important;
+  box-shadow: none !important; background: var(--studio-sidebar-bg) !important;
+}
+.studio-app-header > div:first-child { flex-wrap: wrap; gap: 9px !important; }
+.studio-app-header > div:last-child { display: none !important; }
+.gradio-container .main { width:100% !important; max-width:none !important; }
+.gradio-container main.contain { width:100% !important; max-width:none !important; margin:0 !important; padding:0 !important; }
+.gradio-container main.contain > .column { width:100% !important; min-width:0 !important; }
+.main-studio-tabs > .tab-wrapper {
+  position:fixed !important; z-index:101 !important; left:0 !important; top:86px !important;
+  bottom:0 !important; width:218px !important; height:auto !important; max-width:none !important;
+  box-sizing:border-box !important; padding:12px !important; margin:0 !important;
+  overflow-y:auto !important; border:0 !important; border-right:1px solid var(--studio-border) !important;
+  border-radius:0 !important; background:var(--studio-sidebar-bg) !important;
+}
+.main-studio-tabs > .tab-wrapper > .tab-container {
+  width:100% !important; display:flex !important; flex-direction:column !important;
+  align-items:stretch !important; justify-content:flex-start !important; gap:3px !important;
+  border:0 !important; background:transparent !important; overflow:visible !important;
+}
+.main-studio-tabs > .tab-wrapper [role="tab"] { justify-content:flex-start !important; width:100% !important; min-height:38px !important; padding:9px 11px !important; border:0 !important; border-radius:8px !important; font-size:13px !important; color:var(--studio-text-secondary) !important; }
+.main-studio-tabs > .tab-wrapper [role="tab"][aria-selected="true"] { color:var(--studio-text-primary) !important; background:var(--studio-surface-active) !important; box-shadow:inset 2px 0 var(--studio-accent) !important; }
+.main-studio-tabs > .tabitem { margin:0 0 0 218px !important; padding:30px 38px 48px !important; width:calc(100% - 218px) !important; max-width:none !important; box-sizing:border-box !important; }
+.main-studio-tabs > .tabitem > .column { width:100% !important; min-width:0 !important; max-width:1420px !important; margin:0 auto !important; }
+.gradio-container .block.padded { padding:0 !important; background:transparent !important; border-color:transparent !important; box-shadow:none !important; }
+.tts-workspace .form { background:transparent !important; border:0 !important; box-shadow:none !important; padding:0 !important; }
+.tts-page-head { display:flex; align-items:center; justify-content:space-between; gap:20px; margin:0 auto 26px; max-width:1420px; }
+.tts-page-head h1 { margin:2px 0 4px; font-size:30px; line-height:1.2; letter-spacing:-.035em; font-weight:650; color:var(--studio-text-primary); }
+.tts-page-head p { margin:0; font-size:14px; color:var(--studio-text-secondary); }
+.eyebrow { font-size:10px; font-weight:650; letter-spacing:.11em; color:var(--studio-text-muted); text-transform:uppercase; }
+.local-status { color:var(--studio-text-secondary); font-size:12px; display:flex; align-items:center; gap:8px; }
+.local-status i { width:7px;height:7px;border-radius:50%;background:var(--studio-success); display:inline-block; }
+.tts-workspace { max-width:1420px; margin:0 auto !important; gap:34px !important; align-items:flex-start !important; }
+.tts-editor-column { min-width:0 !important; }
+.project-row { align-items:end !important; gap:20px !important; }
+.project-title { max-width:440px; }
+.script-count { font-size:12px !important; color:var(--studio-text-secondary) !important; text-align:right; padding-bottom:9px; }
+.script-count p { margin:0 !important; }
+.editor-caption { display:flex; justify-content:space-between; align-items:center; margin:18px 2px 8px; color:var(--studio-text-primary); font-size:14px; font-weight:600; }
+.editor-caption span+span { color:var(--studio-text-muted); font-size:11px; font-weight:500; }
+.script-editor-canvas textarea { min-height:385px !important; height: min(48vh, 500px) !important; background:var(--studio-surface) !important; border:1px solid var(--studio-border-subtle) !important; border-radius:12px !important; padding:24px 26px !important; font-size:17px !important; line-height:1.82 !important; resize:vertical !important; }
+.script-editor-canvas textarea::placeholder { color:var(--studio-text-muted) !important; }
+.editor-footer { align-items:center !important; gap:16px !important; padding:12px 2px 0 !important; }
+.workflow-mode { flex:1; }
+.workflow-mode > label { text-transform:none !important; letter-spacing:0 !important; font-size:12px !important; }
+.workflow-mode [role=radio] { padding:7px 11px !important; background:transparent !important; border-color:var(--studio-border) !important; }
+.chapter-preview { margin-top:8px !important; }
+.section-divider,.inspector-rule { height:1px; background:var(--studio-border-subtle); margin:24px 0 20px; }
+.output-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.output-heading h2,.inspector-heading h2 { margin:4px 0 0; font-size:17px; font-weight:620; letter-spacing:-.02em; }
+.output-note { font-size:11px; color:var(--studio-text-muted); }
+.studio-audio-output { min-height:90px; }
+.audio-actions { display:grid !important; grid-template-columns:minmax(0,1fr) minmax(120px,auto) auto !important; align-items:center !important; gap:12px !important; }
+.audio-actions > * { width:auto !important; min-width:0 !important; flex:none !important; }
+.audio-actions .mp3-export { width:100% !important; }
+.mp3-export { height:82px !important; min-height:82px !important; max-height:82px !important; overflow:hidden !important; }
+.mp3-export .empty { height:78px !important; min-height:78px !important; padding:4px !important; }
+.mp3-export .empty .icon svg { width:18px !important; height:18px !important; }
+.mp3-export .empty::after { content:"Long-form MP3 export will appear here"; display:block; font-size:11px; color:var(--studio-text-muted); }
+.audio-actions .engine-status { font-size:12px !important; color:var(--studio-text-secondary) !important; }
+.tts-workspace input[type="radio"] { accent-color:var(--studio-accent) !important; }
+.generation-details { font-size:12px; color:var(--studio-text-secondary); }
+.tts-inspector { position:sticky !important; top:22px; padding:18px 18px 20px !important; border-left:1px solid var(--studio-border-subtle) !important; background:transparent !important; }
+.inspector-heading { margin:0 0 20px; }
+.voice-mark { display:flex; gap:11px; align-items:center; margin-bottom:13px; }
+.voice-mark>span { width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:linear-gradient(145deg,#C2B7FF,#7A69D4);color:#171323;font-weight:700; }
+.voice-mark b,.voice-mark small { display:block; }
+.voice-mark b { font-size:13px; }
+.voice-mark small { margin-top:2px;font-size:11px;color:var(--studio-text-muted); }
+.tts-inspector .gr-button { border-radius:8px !important; }
+.tts-inspector .studio-btn-primary { width:100%; min-height:44px; margin-top:20px; }
+.tts-inspector .gradio-radio label { text-transform:none !important; letter-spacing:0 !important; font-size:12px !important; }
+.tts-inspector .gradio-radio [role=radio] { padding:6px 8px !important; }
+.tts-inspector .gr-accordion { background:transparent !important; border:0 !important; overflow:hidden !important; }
+.tts-inspector .inspector-rule { margin:20px 0 14px; }
+.gradio-container label span,.gradio-container .gr-form>label { text-transform:none !important; letter-spacing:0 !important; font-size:12px !important; font-weight:550 !important; }
+@media(max-width:900px) {
+ .main-studio-tabs > .tabitem { padding:24px 22px 40px !important; }
+ .tts-workspace { gap:18px !important; }
+ .tts-inspector { min-width:230px !important; }
+}
+@media(max-width:1120px) {
+ .tts-workspace { display:flex !important; flex-direction:column !important; }
+ .tts-workspace>div { width:100% !important; min-width:0 !important; }
+ .tts-inspector { position:static !important; border-left:0 !important; border-top:1px solid var(--studio-border-subtle) !important; padding:20px 0 0 !important; }
+}
+@media(max-width:820px) {
+ .studio-app-header { inset:0 0 auto 0 !important; width:auto !important; height:54px !important; padding:10px 15px !important; border-right:0 !important; border-bottom:1px solid var(--studio-border) !important; }
+ .main-studio-tabs > .tab-wrapper { position:fixed !important; left:0 !important; top:54px !important; bottom:auto !important; width:100vw !important; height:56px !important; padding:4px 6px !important; border-right:0 !important; border-bottom:1px solid var(--studio-border) !important; overflow-x:auto !important; overflow-y:hidden !important; }
+ .main-studio-tabs > .tab-wrapper > .tab-container { width:max-content !important; min-width:100% !important; height:100% !important; flex-direction:row !important; align-items:center !important; justify-content:flex-start !important; overflow:visible !important; }
+ .main-studio-tabs > .tab-wrapper [role="tab"] { width:auto !important; flex:0 0 auto !important; justify-content:center !important; min-height:40px !important; padding:8px 10px !important; font-size:11px !important; }
+ .main-studio-tabs > .tabitem { margin:0 !important; width:100% !important; padding:82px 15px 32px !important; }
+ .tts-page-head { align-items:flex-start; margin-bottom:18px; }
+ .tts-page-head h1 { font-size:25px; }
+ .local-status { display:none; }
+ .tts-workspace { display:flex !important; flex-direction:column !important; gap:22px !important; }
+ .tts-workspace>div { width:100% !important; min-width:0 !important; }
+ .script-editor-canvas textarea { min-height:300px !important; height:42vh !important; font-size:16px !important; }
+ .audio-actions { grid-template-columns:minmax(0,1fr) auto !important; }
+ .audio-actions .mp3-export { grid-column:1 / -1; }
+}
+"""
 IPHONE_INSPIRED_CSS = STUDIO_PRO_CSS

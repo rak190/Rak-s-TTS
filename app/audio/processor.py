@@ -19,6 +19,10 @@ class AudioMetadata:
     file_size_bytes: int
     peak_dbfs: Optional[float] = None
     rms_dbfs: Optional[float] = None
+    silence_percent: Optional[float] = None
+    is_clipped: Optional[bool] = None
+    noise_floor_dbfs: Optional[float] = None
+    quality_notes: str = ""
     is_valid: bool = True
     error_message: str = ""
 
@@ -60,14 +64,55 @@ class AudioProcessor:
             info = sf.info(str(p))
             peak_dbfs = None
             rms_dbfs = None
+            silence_percent = None
+            is_clipped = None
+            noise_floor_dbfs = None
+            quality_notes = ""
+
             if file_size < 50 * 1024 * 1024:
                 try:
                     audio_data, _ = sf.read(str(p), dtype="float32")
                     if audio_data.size > 0:
-                        peak = float(np.max(np.abs(audio_data)))
-                        rms = float(np.sqrt(np.mean(audio_data**2)))
+                        if audio_data.ndim > 1:
+                            audio_mono = np.mean(audio_data, axis=1)
+                        else:
+                            audio_mono = audio_data
+
+                        peak = float(np.max(np.abs(audio_mono)))
+                        rms = float(np.sqrt(np.mean(audio_mono**2)))
                         peak_dbfs = round(20 * np.log10(max(peak, 1e-6)), 1)
                         rms_dbfs = round(20 * np.log10(max(rms, 1e-6)), 1)
+
+                        clipped_samples = int(np.sum(np.abs(audio_mono) >= 0.999))
+                        is_clipped = clipped_samples > 10
+
+                        sr = info.samplerate
+                        fl = max(1, int(0.05 * sr))
+                        num_frames = len(audio_mono) // fl
+                        if num_frames > 0:
+                            frames = audio_mono[:num_frames * fl].reshape(num_frames, fl)
+                            frame_rms = np.sqrt(np.mean(frames**2, axis=1))
+                            silence_thresh = max(1e-4, rms * 0.1)
+                            silent_frames = int(np.sum(frame_rms < silence_thresh))
+                            silence_percent = round((silent_frames / num_frames) * 100, 1)
+
+                            noise_floor = float(np.percentile(frame_rms, 10))
+                            noise_floor_dbfs = round(20 * np.log10(max(noise_floor, 1e-6)), 1)
+                        else:
+                            silence_percent = 0.0
+                            noise_floor_dbfs = -60.0
+
+                        notes = []
+                        if is_clipped:
+                            notes.append("⚠️ Potential clipping detected")
+                        if silence_percent > 40.0:
+                            notes.append(f"ℹ️ High silence ({silence_percent}%)")
+                        if noise_floor_dbfs > -30.0:
+                            notes.append("⚠️ Elevated background noise")
+                        if not notes:
+                            notes.append("✅ Clear speech dynamics")
+                        quality_notes = "; ".join(notes)
+
                 except Exception:
                     pass
 
@@ -80,6 +125,10 @@ class AudioProcessor:
                 file_size_bytes=file_size,
                 peak_dbfs=peak_dbfs,
                 rms_dbfs=rms_dbfs,
+                silence_percent=silence_percent,
+                is_clipped=is_clipped,
+                noise_floor_dbfs=noise_floor_dbfs,
+                quality_notes=quality_notes,
                 is_valid=True
             )
         except Exception as e:

@@ -59,11 +59,13 @@ class ModelManager:
         sys_avail_gb = round(psutil.virtual_memory().available / (1024**3), 2)
         sample_rate = self.model.tts_model.sample_rate if self.model else 48000
         
+        import torch
         return {
             "is_loaded": self.is_loaded(),
             "is_loading": self.is_loading,
             "load_time_sec": self.load_time_sec,
             "sample_rate_hz": sample_rate,
+            "num_threads": torch.get_num_threads(),
             "process_rss_mb": mem_rss_mb,
             "system_available_gb": sys_avail_gb,
             "model_path": str(self.model_dir),

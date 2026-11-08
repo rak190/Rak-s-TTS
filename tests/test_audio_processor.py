@@ -85,6 +85,26 @@ class TestAudioProcessor(unittest.TestCase):
         meta = AudioProcessor.inspect_audio(non_existent)
         self.assertFalse(meta.is_valid)
 
+    def test_audio_quality_indicators(self):
+        # Create a signal with clipping and silence
+        sr = 48000
+        dur = 3.0
+        t = np.linspace(0, dur, int(sr * dur), endpoint=False)
+        # 1s loud/clipped sine + 2s silence
+        signal = np.zeros_like(t)
+        signal[:sr] = 1.2 * np.sin(2 * np.pi * 440 * t[:sr])
+        clipped_wav = self.dir_path / "clipped_quality.wav"
+        sf.write(str(clipped_wav), signal, sr)
+
+        meta = AudioProcessor.inspect_audio(clipped_wav)
+        self.assertTrue(meta.is_valid)
+        self.assertIsNotNone(meta.peak_dbfs)
+        self.assertIsNotNone(meta.rms_dbfs)
+        self.assertIsNotNone(meta.silence_percent)
+        self.assertGreater(meta.silence_percent, 40.0) # >40% silent
+        self.assertTrue(meta.is_clipped)
+        self.assertIn("clipping", meta.quality_notes.lower())
+
         empty_file = self.dir_path / "empty.wav"
         empty_file.touch()
         meta_empty = AudioProcessor.inspect_audio(empty_file)

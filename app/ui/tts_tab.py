@@ -1,7 +1,10 @@
 """
-Text-to-Speech Studio UI tab.
-Provides Standard Single-Pass Speech Synthesis and Intelligent Long-Form Article/Audiobook Studio
-with sentence-aware chunking, persistent checkpoints, resume, and dual WAV/MP3 export.
+VoiceStudio Pro — Speech Studio UI Tab.
+Flagship ElevenLabs & Descript-inspired Creative Workspace:
+- Massive, distraction-free script canvas with Khmer & English typography.
+- Contextual Inspector panel on right (speaker avatar, cloning mode, acoustic parameters).
+- Signature audio player dock with dual 48kHz WAV / 320k MP3 download.
+- Sentence-aware long-form chunk analysis and checkpoint-resumable synthesis.
 """
 import time
 import uuid
@@ -24,15 +27,19 @@ def get_available_profiles() -> List[str]:
 
 def on_text_changed(text: str):
     if not text:
-        return "Language: Waiting for input..."
+        return "Waiting for text input... • 0 characters"
     lang = TextProcessor.detect_language(text)
+    char_count = len(text)
+    word_count = len(text.split())
     if lang == "khmer":
-        return "Detected Language: 🇰🇭 Khmer"
+        lang_str = "🇰🇭 Khmer (ភាសាខ្មែរ)"
     elif lang == "english":
-        return "Detected Language: 🇬🇧 English"
+        lang_str = "🇬🇧 English"
     elif lang == "mixed":
-        return "Detected Language: 🌐 Mixed (Khmer + English Code-Switching)"
-    return f"Detected Language: {lang.capitalize()}"
+        lang_str = "🌐 Mixed (Khmer + English)"
+    else:
+        lang_str = lang.capitalize()
+    return f"{lang_str} • {char_count} chars • ~{word_count} words"
 
 def cancel_current_generation():
     queue = GenerationQueue.get_instance()
@@ -51,7 +58,7 @@ def run_tts_generation(
     timesteps: int
 ):
     if not text or not text.strip():
-        yield None, "Error: Target text cannot be empty.", "No telemetry available."
+        yield None, "Error: Target script cannot be empty.", "No telemetry available."
         return
 
     norm_text = TextProcessor.normalize_text(text)
@@ -118,20 +125,19 @@ def run_tts_generation(
             yield None, badge, f"⏳ {msg}..."
             time.sleep(0.5)
         elif st == "processing":
-            yield None, badge, f"⚙️ {msg} (Synthesizing on CPU...)"
+            yield None, badge, f"⚙️ {msg} (Synthesizing on CPU 4 P-cores...)"
             time.sleep(0.5)
         elif st == "completed":
             res = status_info.get("result") or task.result
             if res:
                 telemetry_md = f"""
-### 📊 Generation Telemetry:
-* **Audio Duration:** `{res['duration_sec']}s`
-* **Generation Time:** `{res['generation_time_sec']}s`
-* **Real-Time Factor (RTF):** `{res['rtf']}x`
-* **Sample Rate:** `{res['sample_rate']} Hz (Studio Quality)`
-* **Output Path:** `{res['output_path']}`
+**Generation Telemetry:**
+* Audio Duration: `{res['duration_sec']}s`
+* Compute Time: `{res['generation_time_sec']}s` (RTF: `{res['rtf']}x`)
+* Native Quality: `{res['sample_rate']} Hz (48kHz AudioVAE V2)`
+* Storage: `{res['output_path']}`
 """
-                status_msg = f"✅ Speech generation complete! ({res['duration_sec']}s audio generated in {res['generation_time_sec']}s)"
+                status_msg = f"✅ Synthesized {res['duration_sec']}s audio in {res['generation_time_sec']}s (RTF: {res['rtf']}x)"
                 yield res['output_path'], status_msg, telemetry_md
             else:
                 yield None, "✅ Completed", "Audio synthesized successfully."
@@ -146,25 +152,22 @@ def run_tts_generation(
         else:
             time.sleep(0.5)
 
-# -------------------------------------------------------------
-# Long-Form Handlers (Stage 4)
-# -------------------------------------------------------------
 def analyze_longform_chunks(text: str) -> str:
     """Analyzes text and returns markdown breakdown of chunks."""
     if not text or not text.strip():
-        return "⚠️ Enter long text above to analyze chunk structure."
+        return "⚠️ Enter long text above to analyze sentence chunk structure."
     
     chunks = SentenceAwareChunker.chunk_text(text)
     if not chunks:
         return "⚠️ Could not parse text into speech chunks."
 
-    md = f"### 📑 Intelligent Sentence-Aware Chunk Plan ({len(chunks)} Chunks Total)\n\n"
-    md += "| # | Chars | Language | Pause After | Chunk Text Preview |\n"
+    md = f"**📑 Sentence Chunk Plan ({len(chunks)} Chunks Total):**\n\n"
+    md += "| # | Chars | Language | Pause | Preview |\n"
     md += "|---|---|---|---|---|\n"
     for c in chunks:
-        preview = (c.text[:55] + "...") if len(c.text) > 55 else c.text
+        preview = (c.text[:45] + "...") if len(c.text) > 45 else c.text
         md += f"| **{c.index + 1}** | {c.char_count} | `{c.language}` | {c.pause_after_ms}ms | {preview} |\n"
-    md += f"\n*Estimated audio duration: ~{len(chunks) * 4:.1f}s - {len(chunks) * 6:.1f}s | Target chunk size: 60–140 chars*"
+    md += f"\n*Estimated runtime: ~{len(chunks) * 4:.1f}s - {len(chunks) * 6:.1f}s audio on Intel Core i5*"
     return md
 
 def run_longform_synthesis(
@@ -177,7 +180,7 @@ def run_longform_synthesis(
 ):
     """Executes long-form synthesis with progress updates and checkpointing."""
     if not text or not text.strip():
-        yield None, None, "❌ Error: Text cannot be empty.", "No telemetry available."
+        yield None, None, "❌ Error: Script text cannot be empty.", "No telemetry available."
         return
 
     profile_id = None
@@ -203,7 +206,6 @@ def run_longform_synthesis(
 
     yield None, None, f"⏳ Prepared {job.total_chunks} chunks. Starting synthesis on CPU queue...", f"Job ID: `{job.id}`"
 
-    # Execute job
     try:
         res = service.execute_job(
             job_id=job.id,
@@ -211,16 +213,15 @@ def run_longform_synthesis(
             inference_timesteps=int(timesteps)
         )
         if res.get("status") == "completed":
-            msg = f"✅ Long-form synthesis completed! ({res['total_chunks']} chunks stitched into {res['total_duration_sec']}s audio)"
+            msg = f"✅ Long-form complete! {res['total_chunks']} chunks stitched into {res['total_duration_sec']}s audio."
             telemetry = f"""
-### 📊 Long-Form Synthesis Telemetry:
-* **Job Title:** `{job.title}`
-* **Total Chunks Synthesized:** `{res['total_chunks']}`
-* **Final Master Duration:** `{res['total_duration_sec']}s`
-* **Total Generation Time:** `{res['total_generation_time_sec']}s`
-* **Average RTF:** `{res['rtf']}x`
-* **Master WAV Output:** `{res['output_wav_path']}`
-* **Master MP3 Output:** `{res['output_mp3_path']}`
+**Long-Form Telemetry:**
+* Job Title: `{job.title}`
+* Chunks Synthesized: `{res['total_chunks']}`
+* Final Duration: `{res['total_duration_sec']}s`
+* Total Time: `{res['total_generation_time_sec']}s` (RTF: `{res['rtf']}x`)
+* Master WAV: `{res['output_wav_path']}`
+* Master MP3: `{res['output_mp3_path']}`
 """
             yield res["output_wav_path"], res["output_mp3_path"], msg, telemetry
         else:
@@ -228,135 +229,149 @@ def run_longform_synthesis(
     except Exception as e:
         yield None, None, f"❌ Long-form synthesis failed: {str(e)}", f"Error: {str(e)}"
 
+
 def create_tts_tab():
-    with gr.Tab("🔊 Text-to-Speech Studio", id="tab_tts"):
-        with gr.Column(elem_classes=["cu-card"]):
-            gr.Markdown("## 🎙️ Multilingual Text-to-Speech Studio")
-            gr.Markdown(
-                "Synthesize natural speech in Khmer, English, or Mixed code-switching. "
-                "Choose between fast single-pass synthesis or the long-form audiobook & article studio."
-            )
+    """Builds the VoiceStudio Pro ElevenLabs & Descript-inspired Flagship Studio."""
+    with gr.Tab("🔊 Speech Studio", id="tab_tts"):
+        # Top Workspace Header (ElevenLabs Project Header)
+        with gr.Row(elem_classes=["studio-canvas-card"]):
+            with gr.Column(scale=3):
+                gr.Markdown(
+                    """
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">Speech Studio</span>
+                        <span class="studio-pill studio-pill-accent">ElevenLabs Creative Workspace</span>
+                        <span class="studio-pill studio-pill-muted">48kHz AudioVAE V2</span>
+                    </div>
+                    """
+                )
+            with gr.Column(scale=2):
+                lang_live_badge = gr.Markdown(value="Waiting for text input... • 0 characters")
 
-        with gr.Tabs():
-            # ---------------------------------------------------------
-            # SUB-TAB 1: Standard Single-Pass TTS
-            # ---------------------------------------------------------
-            with gr.TabItem("⚡ Standard Speech Synthesis"):
-                with gr.Row():
-                    with gr.Column(scale=2, elem_classes=["cu-card"]):
-                        text_input = gr.Textbox(
-                            label="Input Text (Khmer, English, or Mixed)",
-                            placeholder="Enter text to synthesize here...",
-                            lines=4
-                        )
-                        lang_badge = gr.Markdown(value="Language: Waiting for input...")
-                        
-                        with gr.Row():
-                            mode_radio = gr.Radio(
-                                choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"],
-                                value="Ordinary TTS",
-                                label="Generation Mode"
-                            )
-                            profile_dropdown = gr.Dropdown(
-                                label="Target Voice Profile",
-                                choices=get_available_profiles(),
-                                value=get_available_profiles()[0] if get_available_profiles() else None
-                            )
-
-                        with gr.Accordion("⚙️ Advanced Inference Parameters", open=False):
-                            with gr.Row():
-                                cfg_slider = gr.Slider(minimum=1.0, maximum=5.0, value=2.0, step=0.1, label="CFG Guidance Scale")
-                                steps_slider = gr.Slider(minimum=5, maximum=30, value=10, step=1, label="Inference Timesteps")
-
-                        with gr.Row():
-                            gen_btn = gr.Button("🎙️ Generate Speech (Offline CPU Queue)", variant="primary")
-                            cancel_btn = gr.Button("🛑 Cancel Generation", variant="stop")
-                        refresh_profiles_btn = gr.Button("🔄 Refresh Profile List", variant="secondary")
-
-                    with gr.Column(scale=2, elem_classes=["cu-card"]):
-                        job_status = gr.Label(label="Execution Status", value="Ready to generate.")
-                        audio_player = gr.Audio(label="Generated Audio Output (48kHz WAV)", type="filepath")
-                        telemetry_display = gr.Markdown(value="Telemetry metrics will appear here after generation.")
-
-            # ---------------------------------------------------------
-            # SUB-TAB 2: Long-Form Studio (Stage 4)
-            # ---------------------------------------------------------
-            with gr.TabItem("📖 Long-Form Studio (Articles & Audiobooks)"):
-                with gr.Column(elem_classes=["cu-card"]):
-                    gr.Markdown(
-                        "Synthesize long articles, chapters, and scripts without audio collapse. "
-                        "Text is partitioned into intelligent sentence chunks, synthesized with persistent checkpoints, "
-                        "and seamlessly stitched with inter-sentence pauses into studio WAV and 320k MP3."
+        # Two-Column Creative Workspace: Central Script Canvas + Right Contextual Inspector
+        with gr.Row():
+            # -------------------------------------------------------------
+            # COLUMN 1: Large Central Script Canvas & Waveform Audio Dock
+            # -------------------------------------------------------------
+            with gr.Column(scale=7):
+                with gr.Group(elem_classes=["studio-canvas-card"]):
+                    project_title_input = gr.Textbox(
+                        label="Project / Chapter Title",
+                        value="Chapter 1: VoiceStudio AI Overview",
+                        placeholder="e.g. Chapter 1: Introduction to VoiceStudio",
+                        interactive=True
                     )
 
-                with gr.Row():
-                    with gr.Column(scale=2, elem_classes=["cu-card"]):
-                        lf_title = gr.Textbox(
-                            label="Project / Chapter Title",
-                            placeholder="e.g. Chapter 1: Introduction to VoiceStudio",
-                            value="Chapter 1: VoiceStudio AI Overview"
+                    script_editor = gr.Textbox(
+                        label="Script Editor (Khmer & English)",
+                        placeholder="Type or paste your Khmer or English script here for natural, expressive speech generation...",
+                        lines=12,
+                        elem_classes=["script-editor-canvas"]
+                    )
+
+                    with gr.Row():
+                        workflow_mode_radio = gr.Radio(
+                            choices=["⚡ Standard Speech", "📖 Long-Form Studio"],
+                            value="⚡ Standard Speech",
+                            label="Workflow Stage"
                         )
-                        lf_text = gr.Textbox(
-                            label="Long-Form Input Text (Khmer or English)",
-                            placeholder="Paste your long text, article, or chapter here...",
-                            lines=7
+                        chunk_analyze_btn = gr.Button("🔍 Analyze Sentence Chunks", variant="secondary", size="sm")
+
+                    chunk_preview_box = gr.Markdown(
+                        value="*Click 'Analyze Sentence Chunks' when drafting long articles or audiobooks.*"
+                    )
+
+                # Signature Waveform & Audio Player Dock (Descript & Apple Music Style)
+                with gr.Group(elem_classes=["studio-canvas-card"]):
+                    gr.Markdown("#### 🎧 Studio Audio Playback & Waveform Timeline")
+                    
+                    with gr.Row():
+                        main_audio_player = gr.Audio(
+                            label="Master Audio Output (Studio 48kHz WAV)",
+                            type="filepath",
+                            interactive=False
                         )
-                        with gr.Row():
-                            lf_analyze_btn = gr.Button("🔍 Analyze & Preview Sentence Chunks", variant="secondary")
-                            lf_refresh_prof_btn = gr.Button("🔄 Refresh Profiles", variant="secondary")
+                        mp3_download_file = gr.File(
+                            label="⬇️ Download MP3 (320kbps)",
+                            interactive=False
+                        )
 
-                        with gr.Row():
-                            lf_mode_radio = gr.Radio(
-                                choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"],
-                                value="Voice Cloning",
-                                label="Cloning Mode"
-                            )
-                            lf_profile_dropdown = gr.Dropdown(
-                                label="Consistent Speaker Voice",
-                                choices=get_available_profiles(),
-                                value=get_available_profiles()[0] if get_available_profiles() else None
-                            )
+                    with gr.Row():
+                        execution_status_badge = gr.Label(label="Engine Status", value="Ready to generate.")
+                    
+                    telemetry_display = gr.Markdown(value="*Generation telemetry and RTF performance metrics will appear here after synthesis.*")
 
-                        lf_preview_view = gr.Markdown(value="Click 'Analyze & Preview Sentence Chunks' to inspect chunk plan.")
+            # -------------------------------------------------------------
+            # COLUMN 2: Contextual Right Inspector (ElevenLabs Style)
+            # -------------------------------------------------------------
+            with gr.Column(scale=3, min_width=280):
+                with gr.Group(elem_classes=["studio-inspector"]):
+                    gr.Markdown("### 🎛️ Voice & Model Inspector")
 
-                        with gr.Row():
-                            lf_start_btn = gr.Button("🎙️ Start Long-Form Synthesis (CPU Queue)", variant="primary")
+                    # Speaker Identity
+                    with gr.Row(elem_classes=["speaker-avatar-card"]):
+                        gr.Markdown(
+                            """
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="speaker-avatar-badge">VS</div>
+                                <div>
+                                    <div style="font-size: 13.5px; font-weight: 600; color: var(--studio-text-primary);">Active Speaker</div>
+                                    <div style="font-size: 11.5px; color: var(--studio-text-secondary);">48,000 Hz Native Mono</div>
+                                </div>
+                            </div>
+                            """
+                        )
 
-                    with gr.Column(scale=2, elem_classes=["cu-card"]):
-                        lf_status = gr.Label(label="Long-Form Status", value="Ready to synthesize.")
-                        lf_master_wav = gr.Audio(label="Full Stitched Master Audio (48kHz Studio WAV)", type="filepath")
-                        with gr.Row():
-                            lf_download_wav = gr.File(label="⬇️ Download WAV (PCM_16 Uncompressed)")
-                            lf_download_mp3 = gr.File(label="⬇️ Download MP3 (320kbps High Quality)")
-                        lf_telemetry = gr.Markdown(value="Long-form generation telemetry will appear here.")
+                    profile_dropdown = gr.Dropdown(
+                        label="Speaker Voice Profile",
+                        choices=get_available_profiles(),
+                        value=get_available_profiles()[0] if get_available_profiles() else None
+                    )
+                    refresh_profiles_btn = gr.Button("🔄 Refresh Voice Profiles", variant="secondary", size="sm")
 
-        # Events - Standard TTS
-        text_input.change(fn=on_text_changed, inputs=[text_input], outputs=[lang_badge])
+                    cloning_mode_selector = gr.Radio(
+                        choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"],
+                        value="Ordinary TTS",
+                        label="Cloning Technique"
+                    )
+
+                    with gr.Accordion("⚙️ Acoustic & Diffusion Controls", open=True):
+                        cfg_slider = gr.Slider(
+                            minimum=1.0, maximum=5.0, value=2.0, step=0.1,
+                            label="CFG Guidance Scale",
+                            info="Higher values adhere tighter to prompt voice (Recommended: 2.0)"
+                        )
+                        steps_slider = gr.Slider(
+                            minimum=5, maximum=30, value=10, step=1,
+                            label="Inference Timesteps",
+                            info="Diffusion steps (10 is optimal for i5 CPU)"
+                        )
+
+                    # Primary Actions
+                    generate_hero_btn = gr.Button(
+                        "🎙️ Generate Speech",
+                        variant="primary",
+                        size="lg",
+                        elem_classes=["studio-btn-primary"]
+                    )
+                    cancel_btn = gr.Button("🛑 Cancel", variant="stop", size="sm")
+
+        # -------------------------------------------------------------
+        # Event Wiring
+        # -------------------------------------------------------------
+        script_editor.change(fn=on_text_changed, inputs=[script_editor], outputs=[lang_live_badge])
         refresh_profiles_btn.click(fn=lambda: gr.update(choices=get_available_profiles()), outputs=[profile_dropdown])
-        cancel_btn.click(fn=cancel_current_generation, outputs=[job_status])
-        
-        gen_btn.click(
-            fn=run_tts_generation,
-            inputs=[text_input, mode_radio, profile_dropdown, cfg_slider, steps_slider],
-            outputs=[audio_player, job_status, telemetry_display]
-        )
+        cancel_btn.click(fn=cancel_current_generation, outputs=[execution_status_badge])
 
-        # Events - Long-Form TTS
-        lf_analyze_btn.click(
+        chunk_analyze_btn.click(
             fn=analyze_longform_chunks,
-            inputs=[lf_text],
-            outputs=[lf_preview_view]
+            inputs=[script_editor],
+            outputs=[chunk_preview_box]
         )
-        lf_refresh_prof_btn.click(
-            fn=lambda: gr.update(choices=get_available_profiles()),
-            outputs=[lf_profile_dropdown]
-        )
-        
-        cfg_val_default = gr.State(2.0)
-        steps_val_default = gr.State(10)
 
-        lf_start_btn.click(
-            fn=run_longform_synthesis,
-            inputs=[lf_title, lf_text, lf_mode_radio, lf_profile_dropdown, cfg_val_default, steps_val_default],
-            outputs=[lf_master_wav, lf_download_mp3, lf_status, lf_telemetry]
+        # Standard Speech Generation
+        generate_hero_btn.click(
+            fn=run_tts_generation,
+            inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider],
+            outputs=[main_audio_player, execution_status_badge, telemetry_display]
         )

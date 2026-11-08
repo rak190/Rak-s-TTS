@@ -75,12 +75,12 @@ def check_port_and_existing_instance(host: str, port: int) -> Tuple[str, Optiona
             except Exception:
                 pass
 
-    # Port is occupied. Probe if it's VoiceStudio AI
+    # Port is occupied. Probe if it's VoiceStudio
     url = f"http://{host}:{port}/"
     try:
         req = urllib.request.urlopen(url, timeout=1.5)
         content = req.read().decode("utf-8", errors="ignore")
-        if "VoiceStudio AI" in content:
+        if "VoiceStudio" in content:
             return "voicestudio", url
     except Exception:
         pass
@@ -205,16 +205,14 @@ def main():
         schedule_browser_open(app_url, delay_sec=1.5)
 
     demo = build_app_ui(default_tab=args.tab)
-    logger.info(f"Starting VoiceStudio AI Web Studio at {app_url}")
+    logger.info(f"Starting VoiceStudio Pro Web Studio at {app_url}")
     import gradio as gr
-    from app.ui.styles import IPHONE_INSPIRED_CSS
-    theme = gr.themes.Soft(primary_hue="blue", secondary_hue="slate")
+    from app.ui.styles import STUDIO_PRO_CSS
     demo.launch(
         server_name=args.host,
         server_port=args.port,
         share=False,
-        theme=theme,
-        css=IPHONE_INSPIRED_CSS
+        css=STUDIO_PRO_CSS
     )
 
 

@@ -98,6 +98,7 @@ def main():
 
     # 1. Base viewports & themes on running server 7860
     base_targets = [
+        ("tts_studio_prototype_1440.png", 1440, 900, False),
         ("voicestudio_desktop_1440.png", 1440, 900, False),
         ("voicestudio_tablet_768.png", 768, 1024, False),
         ("voicestudio_mobile_390.png", 390, 844, False),

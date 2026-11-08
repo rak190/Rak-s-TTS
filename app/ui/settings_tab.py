@@ -150,24 +150,33 @@ def get_settings_markdown() -> str:
 
 
 def create_settings_tab():
-    """Builds the comprehensive Cupertino Settings & Studio Management Tab."""
+    """Builds the comprehensive VoiceStudio Pro Settings & Studio Management Tab."""
     svc = SettingsService()
     current_prefs = svc.get_all_preferences()
 
     with gr.Tab("⚙️ Settings", id="tab_settings"):
-        with gr.Column(elem_classes=["cu-card"]):
+        with gr.Column(elem_classes=["studio-canvas-card"]):
             gr.Markdown(
                 """
-                ## ⚙️ Studio Settings & Data Management
-                *Configure application defaults, access local files, and manage full studio data backups.*
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.02em;">Studio Preferences & Data Management</div>
+                        <div style="font-size: 13px; color: var(--studio-text-secondary); margin-top: 2px;">
+                            Configure defaults, access local storage directories, and manage portable backups.
+                        </div>
+                    </div>
+                    <div>
+                        <span class="studio-pill studio-pill-accent">Local SQLite Engine</span>
+                    </div>
+                </div>
                 """
             )
 
         with gr.Row():
             # Left Column: User Preferences & Storage Shortcuts
             with gr.Column(scale=1):
-                with gr.Group(elem_classes=["cu-card"]):
-                    gr.Markdown("### 🎛️ Default Studio Preferences")
+                with gr.Group(elem_classes=["studio-canvas-card"]):
+                    gr.Markdown("#### 🎛️ Default Studio Preferences")
 
                     pref_lang = gr.Dropdown(
                         label="Default Generation Language",
@@ -190,8 +199,8 @@ def create_settings_tab():
                             label="UI Theme Appearance",
                             choices=[
                                 ("Follow System Appearance", "system"),
-                                ("Cupertino Light Mode", "light"),
-                                ("OLED Dark Mode", "dark")
+                                ("Studio Light Mode", "light"),
+                                ("Linear Dark Mode", "dark")
                             ],
                             value=current_prefs.get("theme", "system")
                         )
@@ -215,8 +224,8 @@ def create_settings_tab():
                     save_prefs_btn = gr.Button("💾 Save Preferences", variant="primary")
                     prefs_status = gr.Markdown(value="")
 
-                with gr.Group(elem_classes=["cu-card"]):
-                    gr.Markdown("### 📂 Open Local Audio Folders")
+                with gr.Group(elem_classes=["studio-canvas-card"]):
+                    gr.Markdown("#### 📂 Open Local Audio Folders")
                     gr.Markdown("Directly access your generated WAV/MP3 files, mastered audio, and voice profiles.")
 
                     with gr.Row():
@@ -231,8 +240,8 @@ def create_settings_tab():
 
             # Right Column: Backup, Restore & Telemetry
             with gr.Column(scale=1):
-                with gr.Group(elem_classes=["cu-card"]):
-                    gr.Markdown("### 🛡️ Studio Backup & Safe Recovery")
+                with gr.Group(elem_classes=["studio-inspector"]):
+                    gr.Markdown("#### 🛡️ Studio Backup & Safe Recovery")
                     gr.Markdown(
                         """
                         * **Database Backup (SQLite Only):** Fast snapshot of database records and schema.
@@ -246,7 +255,7 @@ def create_settings_tab():
 
                     backup_status_msg = gr.Markdown(value="")
 
-                    gr.Markdown("#### 📜 Backup Archive History")
+                    gr.Markdown("##### 📜 Backup Archive History")
                     backup_table = gr.Dataframe(
                         headers=["Backup Type", "Filename", "Size", "Created Date", "File Path"],
                         datatype=["str", "str", "str", "str", "str"],
@@ -254,7 +263,7 @@ def create_settings_tab():
                         interactive=False
                     )
 
-                    gr.Markdown("#### 🔄 Restore from Backup Archive")
+                    gr.Markdown("##### 🔄 Restore from Backup Archive")
                     restore_dropdown = gr.Dropdown(
                         label="Select Backup to Restore",
                         choices=get_backup_choices(),
@@ -270,8 +279,7 @@ def create_settings_tab():
         # System Telemetry & Privacy Banner
         with gr.Row():
             with gr.Column():
-                with gr.Group(elem_classes=["cu-card"]):
-                    gr.Markdown("### 📊 System Information & Telemetry")
+                with gr.Accordion("📊 System Information & Diagnostics", open=False):
                     telemetry_display = gr.Markdown(value=get_settings_markdown)
                     refresh_telem_btn = gr.Button("🔄 Refresh Telemetry", variant="secondary", size="sm")
 
@@ -281,6 +289,7 @@ def create_settings_tab():
                         ### 🔒 100% Offline Local Privacy Guarantee
                         * All synthesis and mastering runs locally on your Intel Core i5 CPU at `127.0.0.1`.
                         * No audio, transcripts, voice biometrics, or embeddings are transmitted to any cloud server or API.
+                        * VoiceStudio Pro is completely private and self-contained on your local machine.
                         """
                     )
 

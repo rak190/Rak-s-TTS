@@ -1,61 +1,68 @@
 """
-Apple iPhone/Cupertino-inspired premium CSS styling for VoiceStudio AI (Stage 5C).
-Includes:
-- Full semantic token architecture for Light and OLED Dark modes.
-- Systematic 4px spacing scale and harmonious border radii.
-- Frosted glass (backdrop-filter) depth and subtle multi-layered shadows.
-- Legally available system typography with extended line-height (1.65-1.7) for Khmer script.
-- Responsive breakpoints down to 390px (iPhone 14/15/16).
-- Accessible focus rings, micro-transitions, and custom Cupertino utility classes.
+VoiceStudio Pro — Apple Creative Workspace Design System.
+Synthesizes:
+- ElevenLabs Studio: Large script editing canvas, voice selection, waveform audio timeline.
+- Apple Human Interface Guidelines: Mac/iOS creative workspace, clean typography, refined hierarchy.
+- Linear: Quiet dark sidebar, restrained borders, layered surfaces (#0B0D12, #11131A, #191C25, #222634).
+- Descript: Text-and-audio workflow, audio waveform timeline, contextual inspector properties.
+Supports seamless Light and Dark modes, legally available typography, and extended line-height for Khmer script.
 """
 
-IPHONE_INSPIRED_CSS = """
+STUDIO_PRO_CSS = """
 /* ==========================================================================
-   VoiceStudio AI — Cupertino / iOS-Inspired Design System (Stage 5C)
+   VoiceStudio Pro — Apple Creative Workspace Design System
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. Design Tokens: Light Mode (Default)
+   1. Design Tokens: Dark Mode (Linear / Apple Dark First)
    -------------------------------------------------------------------------- */
-:root {
-    /* Semantic Colors */
-    --ios-bg: #F2F2F7;
-    --ios-card-bg: rgba(255, 255, 255, 0.88);
-    --ios-card-elevated: #FFFFFF;
-    --ios-card-border: rgba(0, 0, 0, 0.08);
-    --ios-card-border-subtle: rgba(0, 0, 0, 0.04);
+:root, .dark, [data-theme='dark'] {
+    /* Surface Palette (Layered Obsidian & Slate) */
+    --studio-bg: #0B0D12;
+    --studio-sidebar-bg: #11131A;
+    --studio-surface: #181B24;
+    --studio-surface-elevated: #222634;
+    --studio-surface-card: #1D212C;
+    --studio-surface-hover: #2A2F40;
+    --studio-surface-active: #32384D;
     
-    /* Apple System Blue & Accents */
-    --ios-blue: #0071E3;
-    --ios-blue-hover: #0077ED;
-    --ios-blue-active: #006EDB;
-    --ios-blue-subtle: rgba(0, 113, 227, 0.08);
-    --ios-blue-glow: rgba(0, 113, 227, 0.22);
+    /* Borders & Hairlines */
+    --studio-border: #2C303F;
+    --studio-border-subtle: #1E222E;
+    --studio-border-focus: #8F7CF2;
     
-    /* Functional Status Colors */
-    --ios-success: #34C759;
-    --ios-success-bg: rgba(52, 199, 89, 0.12);
-    --ios-warning: #FF9500;
-    --ios-warning-bg: rgba(255, 149, 0, 0.12);
-    --ios-error: #FF3B30;
-    --ios-error-bg: rgba(255, 59, 48, 0.12);
+    /* Linear Restrained Accents (Electric Violet / Lavender) */
+    --studio-accent: #8F7CF2;
+    --studio-accent-hover: #A08FF8;
+    --studio-accent-active: #7A66E8;
+    --studio-accent-subtle: rgba(143, 124, 242, 0.12);
+    --studio-accent-glow: rgba(143, 124, 242, 0.28);
+    --studio-accent-text: #FFFFFF;
+
+    /* Functional Semantics */
+    --studio-success: #58C9A1;
+    --studio-success-bg: rgba(88, 201, 161, 0.12);
+    --studio-warning: #E9B76E;
+    --studio-warning-bg: rgba(233, 183, 110, 0.12);
+    --studio-error: #F26C6D;
+    --studio-error-bg: rgba(242, 108, 109, 0.14);
     
-    /* Cupertino Typography Colors */
-    --ios-text-primary: #1D1D1F;
-    --ios-text-secondary: #6E6E73;
-    --ios-text-tertiary: #AEAEB2;
-    --ios-text-on-accent: #FFFFFF;
+    /* Typography Colors */
+    --studio-text-primary: #F6F7FB;
+    --studio-text-secondary: #9FA4B5;
+    --studio-text-muted: #64697B;
+    --studio-text-link: #8F7CF2;
     
     /* Controls & Inputs */
-    --ios-input-bg: rgba(255, 255, 255, 0.95);
-    --ios-input-border: rgba(0, 0, 0, 0.12);
-    --ios-input-focus-border: #0071E3;
+    --studio-input-bg: #141720;
+    --studio-input-border: #2C303F;
     
-    /* Surfaces & Glass */
-    --ios-header-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 245, 247, 0.88) 100%);
-    --ios-glass-blur: blur(24px) saturate(180%);
+    /* Waveform & Audio Player Colors */
+    --studio-wave-bg: #131620;
+    --studio-wave-bar: #8F7CF2;
+    --studio-wave-played: #A08FF8;
     
-    /* Harmonious Spacing Scale (4px Base Grid) */
+    /* Spacing & Radii */
     --space-1: 4px;
     --space-2: 8px;
     --space-3: 12px;
@@ -63,117 +70,81 @@ IPHONE_INSPIRED_CSS = """
     --space-5: 20px;
     --space-6: 24px;
     --space-8: 32px;
-    --space-10: 40px;
     
-    /* Border Radii */
-    --ios-radius-xs: 8px;
-    --ios-radius-sm: 10px;
-    --ios-radius-md: 14px;
-    --ios-radius-lg: 20px;
-    --ios-radius-xl: 28px;
-    --ios-radius-pill: 980px;
-    
-    /* Soft Layered Shadows */
-    --ios-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-    --ios-shadow-md: 0 4px 18px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.03);
-    --ios-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04);
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    --radius-pill: 980px;
+
+    /* Shadows */
+    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.35);
+    --shadow-elevated: 0 12px 36px rgba(0, 0, 0, 0.55);
 }
 
 /* --------------------------------------------------------------------------
-   2. Design Tokens: OLED Dark Mode
+   2. Design Tokens: Light Mode (Apple Studio Clean Light)
    -------------------------------------------------------------------------- */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --ios-bg: #000000;
-        --ios-card-bg: rgba(28, 28, 30, 0.88);
-        --ios-card-elevated: #2C2C2E;
-        --ios-card-border: rgba(255, 255, 255, 0.12);
-        --ios-card-border-subtle: rgba(255, 255, 255, 0.06);
-        
-        --ios-blue: #0A84FF;
-        --ios-blue-hover: #409CFF;
-        --ios-blue-active: #0071E3;
-        --ios-blue-subtle: rgba(10, 132, 255, 0.16);
-        --ios-blue-glow: rgba(10, 132, 255, 0.32);
-        
-        --ios-success: #30D158;
-        --ios-success-bg: rgba(48, 209, 88, 0.16);
-        --ios-warning: #FF9F0A;
-        --ios-warning-bg: rgba(255, 159, 10, 0.16);
-        --ios-error: #FF453A;
-        --ios-error-bg: rgba(255, 69, 58, 0.16);
-        
-        --ios-text-primary: #F5F5F7;
-        --ios-text-secondary: #8E8E93;
-        --ios-text-tertiary: #636366;
-        --ios-text-on-accent: #FFFFFF;
-        
-        --ios-input-bg: rgba(44, 44, 46, 0.85);
-        --ios-input-border: rgba(255, 255, 255, 0.16);
-        --ios-input-focus-border: #0A84FF;
-        
-        --ios-header-bg: linear-gradient(135deg, rgba(28, 28, 30, 0.95) 0%, rgba(18, 18, 20, 0.90) 100%);
-        --ios-glass-blur: blur(28px) saturate(190%);
-        
-        --ios-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-        --ios-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.55);
-        --ios-shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.75);
-    }
-}
+body:not(.dark) {
+    --studio-bg: #F4F5F8;
+    --studio-sidebar-bg: #EAECEF;
+    --studio-surface: #FFFFFF;
+    --studio-surface-elevated: #F8F9FA;
+    --studio-surface-card: #FFFFFF;
+    --studio-surface-hover: #F0F2F5;
+    --studio-surface-active: #E4E7EB;
+    
+    --studio-border: #E0E2E7;
+    --studio-border-subtle: #ECEEF2;
+    --studio-border-focus: #6E56CF;
+    
+    --studio-accent: #6E56CF;
+    --studio-accent-hover: #5B44BA;
+    --studio-accent-active: #4F38AA;
+    --studio-accent-subtle: rgba(110, 86, 207, 0.08);
+    --studio-accent-glow: rgba(110, 86, 207, 0.20);
+    --studio-accent-text: #FFFFFF;
 
-.dark, [data-theme='dark'] {
-    --ios-bg: #000000;
-    --ios-card-bg: rgba(28, 28, 30, 0.88);
-    --ios-card-elevated: #2C2C2E;
-    --ios-card-border: rgba(255, 255, 255, 0.12);
-    --ios-card-border-subtle: rgba(255, 255, 255, 0.06);
+    --studio-success: #2A9D6E;
+    --studio-success-bg: rgba(42, 157, 110, 0.10);
+    --studio-warning: #C97D1A;
+    --studio-warning-bg: rgba(201, 125, 26, 0.10);
+    --studio-error: #D64242;
+    --studio-error-bg: rgba(214, 66, 66, 0.10);
     
-    --ios-blue: #0A84FF;
-    --ios-blue-hover: #409CFF;
-    --ios-blue-active: #0071E3;
-    --ios-blue-subtle: rgba(10, 132, 255, 0.16);
-    --ios-blue-glow: rgba(10, 132, 255, 0.32);
+    --studio-text-primary: #121417;
+    --studio-text-secondary: #606775;
+    --studio-text-muted: #8E95A5;
+    --studio-text-link: #6E56CF;
     
-    --ios-success: #30D158;
-    --ios-success-bg: rgba(48, 209, 88, 0.16);
-    --ios-warning: #FF9F0A;
-    --ios-warning-bg: rgba(255, 159, 10, 0.16);
-    --ios-error: #FF453A;
-    --ios-error-bg: rgba(255, 69, 58, 0.16);
+    --studio-input-bg: #FFFFFF;
+    --studio-input-border: #D5D8DF;
     
-    --ios-text-primary: #F5F5F7;
-    --ios-text-secondary: #8E8E93;
-    --ios-text-tertiary: #636366;
-    --ios-text-on-accent: #FFFFFF;
-    
-    --ios-input-bg: rgba(44, 44, 46, 0.85);
-    --ios-input-border: rgba(255, 255, 255, 0.16);
-    --ios-input-focus-border: #0A84FF;
-    
-    --ios-header-bg: linear-gradient(135deg, rgba(28, 28, 30, 0.95) 0%, rgba(18, 18, 20, 0.90) 100%);
-    --ios-glass-blur: blur(28px) saturate(190%);
-    
-    --ios-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-    --ios-shadow-md: 0 4px 24px rgba(0, 0, 0, 0.55);
-    --ios-shadow-lg: 0 14px 44px rgba(0, 0, 0, 0.75);
+    --studio-wave-bg: #F0F2F6;
+    --studio-wave-bar: #6E56CF;
+    --studio-wave-played: #5B44BA;
+
+    --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.04);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
 /* --------------------------------------------------------------------------
-   3. Global Layout & Typography Hierarchy
+   3. Global Layout & Typography
    -------------------------------------------------------------------------- */
 body, .gradio-container {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, "Helvetica Neue", "Kantumruy Pro", "Khmer OS Battambang", sans-serif !important;
-    background-color: var(--ios-bg) !important;
-    color: var(--ios-text-primary) !important;
+    background-color: var(--studio-bg) !important;
+    color: var(--studio-text-primary) !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", "Kantumruy Pro", "Khmer OS Battambang", sans-serif !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    letter-spacing: -0.012em;
+    letter-spacing: -0.011em;
     line-height: 1.55;
-    margin: 0;
-    padding: 0;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
 }
 
-/* Khmer Script & Multilingual Typography Line-Height Guarantee */
+/* Khmer Script & Multilingual Line-Height Optimization */
 textarea, input, p, span, div, td, th, label {
     line-height: 1.6;
 }
@@ -184,349 +155,344 @@ textarea, input, p, span, div, td, th, label {
 }
 
 /* --------------------------------------------------------------------------
-   4. Header Banner - Frosted Glass Cupertino Style
+   4. Desktop App Shell: Left Sidebar + Main Workspace
    -------------------------------------------------------------------------- */
-.app-header {
-    background: var(--ios-header-bg) !important;
-    backdrop-filter: var(--ios-glass-blur);
-    -webkit-backdrop-filter: var(--ios-glass-blur);
-    border: 1px solid var(--ios-card-border) !important;
-    border-radius: var(--ios-radius-lg) !important;
-    padding: var(--space-6) var(--space-8) !important;
-    margin-bottom: var(--space-5) !important;
-    box-shadow: var(--ios-shadow-md) !important;
-    transition: box-shadow 0.25s ease;
+/* --------------------------------------------------------------------------
+   4. Desktop App Shell: Sleek macOS / Linear Creative Toolbar & Workspace
+   -------------------------------------------------------------------------- */
+.studio-app-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 12px 24px !important;
+    background: var(--studio-sidebar-bg) !important;
+    border-bottom: 1px solid var(--studio-border) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25) !important;
 }
 
-.app-header h1 {
-    font-size: 28px !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.03em !important;
-    margin-top: 0 !important;
-    margin-bottom: var(--space-1) !important;
-    color: var(--ios-text-primary) !important;
+@media (max-width: 768px) {
+    .studio-app-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 8px !important;
+        padding: 10px 14px !important;
+    }
 }
 
-.app-header h3 {
-    font-size: 16px !important;
+.main-studio-tabs {
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Linear & macOS Segmented Tab Navigation Bar */
+.main-studio-tabs > .tab-nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: var(--studio-sidebar-bg) !important;
+    border-bottom: 1px solid var(--studio-border) !important;
+    padding: 8px 16px !important;
+    margin: 0 0 20px 0 !important;
+    border-radius: 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    border: none !important;
+    border-bottom: 1px solid var(--studio-border) !important;
+}
+
+/* Tab Navigation Buttons (Apple Segmented Pill / Linear Nav) */
+.main-studio-tabs > .tab-nav > button {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 13.5px !important;
     font-weight: 500 !important;
-    color: var(--ios-blue) !important;
-    margin-top: 0 !important;
-    margin-bottom: var(--space-2) !important;
+    color: var(--studio-text-secondary) !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    transition: all 0.15s ease !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
 }
 
-.app-header p, .app-header em {
-    font-size: 13px !important;
-    color: var(--ios-text-secondary) !important;
+.main-studio-tabs > .tab-nav > button:hover {
+    background: var(--studio-surface-hover) !important;
+    color: var(--studio-text-primary) !important;
+}
+
+.main-studio-tabs > .tab-nav > button.selected {
+    background: var(--studio-surface-elevated) !important;
+    color: var(--studio-text-primary) !important;
+    font-weight: 600 !important;
+    border: 1px solid var(--studio-border) !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) !important;
+    border-bottom: 2px solid var(--studio-accent) !important;
+}
+
+/* Main Workspace Canvas Container */
+.main-studio-tabs > div:not(.tab-nav) {
+    padding: 0 24px 32px 24px !important;
+    max-width: 1440px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
 }
 
 /* --------------------------------------------------------------------------
-   5. Card Containers & Panels
+   5. Elimination of Generic Blue Labels & Nested Box Clutter
    -------------------------------------------------------------------------- */
-.gr-box, .gr-panel, .tabitem, .cu-card {
-    border-radius: var(--ios-radius-lg) !important;
-    background: var(--ios-card-bg) !important;
-    border: 1px solid var(--ios-card-border) !important;
-    box-shadow: var(--ios-shadow-sm) !important;
-    padding: var(--space-4) !important;
-    margin-bottom: var(--space-4) !important;
-    backdrop-filter: var(--ios-glass-blur);
-    -webkit-backdrop-filter: var(--ios-glass-blur);
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+/* Eliminate bright blue background rectangles on labels */
+.gr-form, .gr-block, .gr-box {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
 }
 
-.cu-card:hover, .gr-box:hover, .gr-panel:hover {
-    box-shadow: var(--ios-shadow-md) !important;
+label span, .gr-form > label {
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    color: var(--studio-text-secondary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 6px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
 }
 
-.cu-card-elevated {
-    background: var(--ios-card-elevated) !important;
-    border: 1px solid var(--ios-card-border) !important;
-    box-shadow: var(--ios-shadow-md) !important;
-    border-radius: var(--ios-radius-md) !important;
-    padding: var(--space-4) !important;
+/* Form Controls & Inputs */
+input[type="text"], input[type="number"], textarea, select {
+    background: var(--studio-input-bg) !important;
+    border: 1px solid var(--studio-input-border) !important;
+    color: var(--studio-text-primary) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 10px 14px !important;
+    font-size: 14.5px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+input:focus, textarea:focus, select:focus {
+    border-color: var(--studio-border-focus) !important;
+    box-shadow: 0 0 0 3px var(--studio-accent-subtle) !important;
+    outline: none !important;
 }
 
 /* --------------------------------------------------------------------------
-   6. Buttons - iPhone Pill & Rounded Modern Action Styling
+   6. ElevenLabs & Descript Flagship Components
+   -------------------------------------------------------------------------- */
+/* Studio Workspace Canvas */
+.studio-canvas-card {
+    background: var(--studio-surface) !important;
+    border: 1px solid var(--studio-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: var(--space-5) !important;
+    box-shadow: var(--shadow-soft) !important;
+    margin-bottom: var(--space-4) !important;
+}
+
+/* Large Script Editor (ElevenLabs Style) */
+.script-editor-canvas textarea {
+    font-size: 17px !important;
+    line-height: 1.7 !important;
+    padding: 18px 22px !important;
+    border-radius: var(--radius-md) !important;
+    background: var(--studio-surface-card) !important;
+    border: 1px solid var(--studio-border) !important;
+    min-height: 280px !important;
+    color: var(--studio-text-primary) !important;
+    letter-spacing: -0.01em !important;
+}
+
+.script-editor-canvas textarea:focus {
+    border-color: var(--studio-border-focus) !important;
+    box-shadow: 0 0 0 4px var(--studio-accent-subtle) !important;
+}
+
+/* Studio Inspector Panel (Right Column) */
+.studio-inspector {
+    background: var(--studio-surface-card) !important;
+    border: 1px solid var(--studio-border) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 18px !important;
+}
+
+/* Speaker Profile Pill / Card */
+.speaker-avatar-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--studio-surface-elevated);
+    border: 1px solid var(--studio-border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+}
+
+.speaker-avatar-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--studio-accent) 0%, #4F38AA 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+/* Signature Waveform & Audio Player (Descript Style) */
+.studio-waveform-player {
+    background: var(--studio-wave-bg) !important;
+    border: 1px solid var(--studio-border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 16px 20px !important;
+    margin-top: 14px !important;
+}
+
+.studio-transport-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--studio-border-subtle);
+    margin-top: 10px;
+}
+
+/* --------------------------------------------------------------------------
+   7. Buttons & Micro-Interactions (Linear Restrained Accent)
    -------------------------------------------------------------------------- */
 .gr-button {
-    border-radius: var(--ios-radius-pill) !important;
+    border-radius: var(--radius-pill) !important;
+    font-size: 13.5px !important;
     font-weight: 600 !important;
-    font-size: 14px !important;
-    padding: 10px 22px !important;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    letter-spacing: -0.01em;
+    padding: 9px 20px !important;
+    letter-spacing: -0.01em !important;
     cursor: pointer !important;
+    transition: all 0.16s ease !important;
     border: 1px solid transparent !important;
 }
 
 .gr-button:active {
-    transform: scale(0.97) !important;
+    transform: scale(0.98) !important;
 }
 
-.gr-button-primary {
-    background: var(--ios-blue) !important;
-    color: var(--ios-text-on-accent) !important;
-    box-shadow: 0 4px 14px var(--ios-blue-glow) !important;
+/* Hero Primary Action (Linear Violet) */
+.gr-button-primary, .studio-btn-primary {
+    background: var(--studio-accent) !important;
+    color: var(--studio-accent-text) !important;
     border: none !important;
+    box-shadow: 0 4px 14px var(--studio-accent-glow) !important;
 }
 
-.gr-button-primary:hover {
-    background: var(--ios-blue-hover) !important;
+.gr-button-primary:hover, .studio-btn-primary:hover {
+    background: var(--studio-accent-hover) !important;
+    box-shadow: 0 6px 20px var(--studio-accent-glow) !important;
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px var(--ios-blue-glow) !important;
 }
 
-.gr-button-secondary {
-    background: rgba(120, 120, 128, 0.12) !important;
-    color: var(--ios-text-primary) !important;
-    border: 1px solid var(--ios-card-border) !important;
+.gr-button-secondary, .studio-btn-secondary {
+    background: var(--studio-surface-elevated) !important;
+    color: var(--studio-text-primary) !important;
+    border: 1px solid var(--studio-border) !important;
 }
 
-.gr-button-secondary:hover {
-    background: rgba(120, 120, 128, 0.18) !important;
-    transform: translateY(-1px);
+.gr-button-secondary:hover, .studio-btn-secondary:hover {
+    background: var(--studio-surface-hover) !important;
+    border-color: var(--studio-border-focus) !important;
 }
 
 .gr-button-stop {
-    background: var(--ios-error) !important;
-    color: var(--ios-text-on-accent) !important;
-    border: none !important;
-    box-shadow: 0 4px 14px rgba(255, 59, 48, 0.25) !important;
+    background: var(--studio-error-bg) !important;
+    color: var(--studio-error) !important;
+    border: 1px solid rgba(242, 108, 109, 0.3) !important;
 }
 
 .gr-button-stop:hover {
-    background: #e03228 !important;
-    transform: translateY(-1px);
+    background: var(--studio-error) !important;
+    color: #FFFFFF !important;
 }
 
 /* --------------------------------------------------------------------------
-   7. Form Controls, Textareas & Inputs
+   8. Status Pills, Metric Cards & Badges
    -------------------------------------------------------------------------- */
-input[type="text"], input[type="number"], textarea, select {
-    border-radius: var(--ios-radius-sm) !important;
-    border: 1px solid var(--ios-input-border) !important;
-    background: var(--ios-input-bg) !important;
-    color: var(--ios-text-primary) !important;
-    font-size: 15px !important;
-    padding: 10px 14px !important;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+.studio-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
 }
 
-input:focus, textarea:focus, select:focus {
-    border-color: var(--ios-input-focus-border) !important;
-    box-shadow: 0 0 0 3px var(--ios-blue-glow) !important;
-    outline: none !important;
+.studio-pill-success {
+    background: var(--studio-success-bg);
+    color: var(--studio-success);
+    border: 1px solid rgba(88, 201, 161, 0.25);
 }
 
-/* Radio buttons & Checkboxes */
-input[type="checkbox"], input[type="radio"] {
-    accent-color: var(--ios-blue) !important;
-    border-radius: 4px !important;
-    cursor: pointer;
+.studio-pill-accent {
+    background: var(--studio-accent-subtle);
+    color: var(--studio-accent);
+    border: 1px solid rgba(143, 124, 242, 0.25);
 }
 
-/* --------------------------------------------------------------------------
-   8. Segmented Control & Navigation Tabs (Cupertino Capsule Nav)
-   -------------------------------------------------------------------------- */
-.tabs > .tab-nav {
-    background: rgba(120, 120, 128, 0.12) !important;
-    border-radius: var(--ios-radius-pill) !important;
-    padding: var(--space-1) !important;
-    display: inline-flex !important;
-    margin-bottom: var(--space-5) !important;
-    border: 1px solid var(--ios-card-border) !important;
-    gap: 2px;
+.studio-pill-muted {
+    background: rgba(100, 105, 123, 0.12);
+    color: var(--studio-text-muted);
+    border: 1px solid var(--studio-border-subtle);
 }
 
-.tabs > .tab-nav > button {
-    border-radius: var(--ios-radius-pill) !important;
-    padding: 8px 18px !important;
-    font-size: 13.5px !important;
-    font-weight: 500 !important;
-    color: var(--ios-text-secondary) !important;
-    border: none !important;
-    background: transparent !important;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-}
-
-.tabs > .tab-nav > button:hover {
-    color: var(--ios-text-primary) !important;
-}
-
-.tabs > .tab-nav > button.selected {
-    background: var(--ios-card-elevated) !important;
-    color: var(--ios-text-primary) !important;
-    font-weight: 600 !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12) !important;
-}
-
-/* --------------------------------------------------------------------------
-   9. Stat Cards & Metrics (Cupertino Metric Grid)
-   -------------------------------------------------------------------------- */
-.cu-metric-grid {
+/* Studio Metric Grid */
+.studio-metric-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: var(--space-3);
-    margin-top: var(--space-2);
-    margin-bottom: var(--space-4);
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
 }
 
-.cu-metric-card {
-    background: rgba(120, 120, 128, 0.08);
-    border-radius: var(--ios-radius-md);
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--ios-card-border);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+.studio-metric-card {
+    background: var(--studio-surface-card);
+    border: 1px solid var(--studio-border);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    transition: transform 0.15s ease;
 }
 
-.cu-metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--ios-shadow-sm);
+.studio-metric-card:hover {
+    transform: translateY(-1px);
+    border-color: var(--studio-border-focus);
 }
 
-.cu-metric-label {
+.studio-metric-label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--ios-text-secondary);
-    margin-bottom: var(--space-1);
+    color: var(--studio-text-secondary);
+    margin-bottom: 4px;
 }
 
-.cu-metric-value {
-    font-size: 20px;
+.studio-metric-value {
+    font-size: 19px;
     font-weight: 700;
-    color: var(--ios-text-primary);
+    color: var(--studio-text-primary);
     letter-spacing: -0.02em;
 }
 
-.cu-metric-note {
-    font-size: 11.5px;
-    color: var(--ios-text-secondary);
-    margin-top: var(--space-1);
-}
-
-/* --------------------------------------------------------------------------
-   10. Badges & Status Indicators
-   -------------------------------------------------------------------------- */
-.cu-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 10px;
-    border-radius: var(--ios-radius-pill);
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-}
-
-.cu-badge-green {
-    background: var(--ios-success-bg);
-    color: var(--ios-success);
-    border: 1px solid rgba(52, 199, 89, 0.25);
-}
-
-.cu-badge-blue {
-    background: var(--ios-blue-subtle);
-    color: var(--ios-blue);
-    border: 1px solid rgba(0, 113, 227, 0.25);
-}
-
-.cu-badge-orange {
-    background: var(--ios-warning-bg);
-    color: var(--ios-warning);
-    border: 1px solid rgba(255, 149, 0, 0.25);
-}
-
-/* --------------------------------------------------------------------------
-   11. Audio Player Surface
-   -------------------------------------------------------------------------- */
-.gr-audio {
-    border-radius: var(--ios-radius-md) !important;
-    border: 1px solid var(--ios-card-border) !important;
-    background: var(--ios-card-bg) !important;
-    overflow: hidden;
-    padding: var(--space-3) !important;
-}
-
-/* --------------------------------------------------------------------------
-   12. Data Tables & Dataframes
-   -------------------------------------------------------------------------- */
-.gr-dataframe {
-    border-radius: var(--ios-radius-md) !important;
-    overflow: hidden !important;
-    border: 1px solid var(--ios-card-border) !important;
-}
-
-.gr-dataframe table {
-    border-collapse: separate !important;
-}
-
-.gr-dataframe th {
-    background: rgba(120, 120, 128, 0.08) !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-    color: var(--ios-text-secondary) !important;
-    border-bottom: 1px solid var(--ios-card-border) !important;
-    padding: 10px 14px !important;
-}
-
-.gr-dataframe td {
-    padding: 10px 14px !important;
-    font-size: 13.5px !important;
-    border-bottom: 1px solid var(--ios-card-border-subtle) !important;
-}
-
-/* --------------------------------------------------------------------------
-   13. Responsive Breakpoints (Desktop, Tablet & iPhone 390px)
-   -------------------------------------------------------------------------- */
-@media (max-width: 1024px) {
-    .app-header {
-        padding: var(--space-5) var(--space-6) !important;
-    }
-    .cu-metric-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-    .app-header {
-        padding: var(--space-4) !important;
-        margin-bottom: var(--space-4) !important;
-    }
-    .app-header h1 {
-        font-size: 22px !important;
-    }
-    .tabs > .tab-nav {
-        display: flex !important;
-        flex-wrap: wrap !important;
-        border-radius: var(--ios-radius-sm) !important;
-        width: 100% !important;
-    }
-    .tabs > .tab-nav > button {
-        padding: 6px 12px !important;
-        font-size: 12.5px !important;
-        flex: 1 1 auto;
-        text-align: center;
-    }
-    .cu-metric-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 420px) {
-    body, .gradio-container {
-        padding: var(--space-2) !important;
-    }
-    .gr-box, .gr-panel, .tabitem, .cu-card {
-        padding: var(--space-3) !important;
-        border-radius: var(--ios-radius-md) !important;
-    }
-    .gr-button {
-        padding: 8px 16px !important;
-        font-size: 13px !important;
-    }
+.studio-metric-sub {
+    font-size: 11px;
+    color: var(--studio-text-muted);
+    margin-top: 3px;
 }
 """
+
+# Maintain backwards compatibility aliases
+IPHONE_INSPIRED_CSS = STUDIO_PRO_CSS

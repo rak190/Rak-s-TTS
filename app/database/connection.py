@@ -2,6 +2,7 @@
 import sqlite3
 import threading
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Tuple, Dict, Any
 
@@ -15,6 +16,9 @@ from app.database.models import (
     LongformChunkRecord,
     MasteringJobRecord
 )
+
+def utc_iso_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 class DatabaseManager:
     """Thread-safe SQLite connection and repository manager."""
@@ -35,6 +39,11 @@ class DatabaseManager:
             if cls._instance is None or cls._instance.db_path != db_path:
                 cls._instance = cls(db_path=db_path)
             return cls._instance
+
+    @classmethod
+    def reset_instance(cls):
+        with cls._lock:
+            cls._instance = None
 
     @contextmanager
     def get_connection(self):
@@ -170,8 +179,39 @@ class DatabaseManager:
             return cursor.rowcount > 0
 
     # -------------------------------------------------------------
-    # Jobs Repository
+    # Jobs Repository (Extended for Schema v4 Batch Queue)
     # -------------------------------------------------------------
+    @staticmethod
+    def _row_to_queue_job(row: sqlite3.Row) -> QueueJob:
+        d = dict(row)
+        return QueueJob(
+            id=d["id"],
+            job_type=d.get("job_type", "tts"),
+            status=d.get("status", "queued"),
+            progress=float(d.get("progress") or 0.0),
+            status_message=d.get("status_message") or "",
+            error_message=d.get("error_message") or "",
+            generation_id=d.get("generation_id"),
+            title=d.get("title") or "Untitled Job",
+            target_text=d.get("target_text") or "",
+            voice_profile_id=d.get("voice_profile_id"),
+            voice_name=d.get("voice_name") or "Default Voice",
+            language=d.get("language") or "multilingual",
+            mode=d.get("mode") or "tts",
+            cfg_value=float(d.get("cfg_value") or 2.0),
+            inference_timesteps=int(d.get("inference_timesteps") or 10),
+            total_chunks=int(d.get("total_chunks") or 1),
+            completed_chunks=int(d.get("completed_chunks") or 0),
+            output_wav_path=d.get("output_wav_path"),
+            output_mp3_path=d.get("output_mp3_path"),
+            retry_count=int(d.get("retry_count") or 0),
+            priority=int(d.get("priority") or 100),
+            created_at=d.get("created_at") or utc_iso_now(),
+            started_at=d.get("started_at"),
+            completed_at=d.get("completed_at"),
+            updated_at=d.get("updated_at") or d.get("created_at") or utc_iso_now()
+        )
+
     def create_job(self, job: QueueJob) -> QueueJob:
         with self.get_connection() as conn:
             cursor = conn.cursor()
@@ -179,13 +219,20 @@ class DatabaseManager:
                 """
                 INSERT INTO jobs (
                     id, job_type, status, progress, status_message,
-                    error_message, generation_id, created_at, started_at, completed_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    error_message, generation_id, title, target_text,
+                    voice_profile_id, voice_name, language, mode,
+                    cfg_value, inference_timesteps, total_chunks, completed_chunks,
+                    output_wav_path, output_mp3_path, retry_count, priority,
+                    created_at, started_at, completed_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     job.id, job.job_type, job.status, job.progress, job.status_message,
-                    job.error_message, job.generation_id, job.created_at, job.started_at,
-                    job.completed_at
+                    job.error_message, job.generation_id, job.title, job.target_text,
+                    job.voice_profile_id, job.voice_name, job.language, job.mode,
+                    job.cfg_value, job.inference_timesteps, job.total_chunks, job.completed_chunks,
+                    job.output_wav_path, job.output_mp3_path, job.retry_count, job.priority,
+                    job.created_at, job.started_at, job.completed_at, job.updated_at
                 )
             )
             return job
@@ -197,13 +244,23 @@ class DatabaseManager:
                 """
                 UPDATE jobs SET
                     status = ?, progress = ?, status_message = ?,
-                    error_message = ?, generation_id = ?,
-                    started_at = ?, completed_at = ?
+                    error_message = ?, generation_id = ?, title = ?,
+                    target_text = ?, voice_profile_id = ?, voice_name = ?,
+                    language = ?, mode = ?, cfg_value = ?, inference_timesteps = ?,
+                    total_chunks = ?, completed_chunks = ?, output_wav_path = ?,
+                    output_mp3_path = ?, retry_count = ?, priority = ?,
+                    started_at = ?, completed_at = ?, updated_at = ?
                 WHERE id = ?
                 """,
                 (
-                    job.status, job.progress, job.status_message, job.error_message,
-                    job.generation_id, job.started_at, job.completed_at, job.id
+                    job.status, job.progress, job.status_message,
+                    job.error_message, job.generation_id, job.title,
+                    job.target_text, job.voice_profile_id, job.voice_name,
+                    job.language, job.mode, job.cfg_value, job.inference_timesteps,
+                    job.total_chunks, job.completed_chunks, job.output_wav_path,
+                    job.output_mp3_path, job.retry_count, job.priority,
+                    job.started_at, job.completed_at, job.updated_at or utc_iso_now(),
+                    job.id
                 )
             )
             return cursor.rowcount > 0
@@ -215,13 +272,64 @@ class DatabaseManager:
             row = cursor.fetchone()
             if not row:
                 return None
-            return QueueJob(**dict(row))
+            return self._row_to_queue_job(row)
 
     def list_jobs(self, limit: int = 30) -> List[QueueJob]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,))
-            return [QueueJob(**dict(row)) for row in cursor.fetchall()]
+            return [self._row_to_queue_job(row) for row in cursor.fetchall()]
+
+    def list_batch_jobs(self, status_filter: Optional[str] = None, limit: int = 50) -> List[QueueJob]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if status_filter:
+                cursor.execute(
+                    "SELECT * FROM jobs WHERE status = ? ORDER BY priority DESC, created_at ASC LIMIT ?",
+                    (status_filter, limit)
+                )
+            else:
+                cursor.execute("SELECT * FROM jobs ORDER BY created_at DESC LIMIT ?", (limit,))
+            return [self._row_to_queue_job(row) for row in cursor.fetchall()]
+
+    def list_pending_jobs(self) -> List[QueueJob]:
+        """Returns all queued/pending jobs ordered strictly by priority and submission timestamp."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM jobs WHERE status IN ('queued', 'pending') ORDER BY priority DESC, created_at ASC"
+            )
+            return [self._row_to_queue_job(row) for row in cursor.fetchall()]
+
+    def mark_interrupted_jobs_on_startup(self) -> int:
+        """Finds any jobs left in 'processing' on application startup and marks them 'interrupted'."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE jobs SET
+                    status = 'interrupted',
+                    status_message = 'Interrupted by application restart (ready to resume)',
+                    updated_at = ?
+                WHERE status = 'processing'
+                """,
+                (utc_iso_now(),)
+            )
+            return cursor.rowcount
+
+    def delete_completed_jobs(self) -> int:
+        """Cleans finished jobs (completed, cancelled) from queue registry."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM jobs WHERE status IN ('completed', 'cancelled')")
+            return cursor.rowcount
+
+    def delete_job(self, job_id: str) -> bool:
+        """Deletes a job by id."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM jobs WHERE id = ?", (job_id,))
+            return cursor.rowcount > 0
 
     # -------------------------------------------------------------
     # Long-Form Jobs & Chunks Repository (Stage 4)

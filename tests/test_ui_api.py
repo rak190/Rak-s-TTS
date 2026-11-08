@@ -19,6 +19,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         from app.ui.layout import build_app_ui
         from app.ui.dashboard_tab import create_dashboard_tab
         from app.ui.tts_tab import create_tts_tab
+        from app.ui.queue_tab import create_queue_tab
         from app.ui.cloning_tab import create_cloning_tab
         from app.ui.library_tab import create_library_tab
         from app.ui.mastering_tab import create_mastering_tab
@@ -28,6 +29,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         self.assertTrue(callable(build_app_ui))
         self.assertTrue(callable(create_dashboard_tab))
         self.assertTrue(callable(create_tts_tab))
+        self.assertTrue(callable(create_queue_tab))
         self.assertTrue(callable(create_cloning_tab))
         self.assertTrue(callable(create_mastering_tab))
         self.assertTrue(callable(create_library_tab))
@@ -209,6 +211,24 @@ class TestVoiceStudioUI(unittest.TestCase):
         self.assertGreater(len(choices), 0)
         res_unconfirmed, _ = handle_restore_backup(choices[0][1], False)
         self.assertIn("Confirmation required", res_unconfirmed)
+
+    def test_13_queue_tab_backend(self):
+        from app.database.connection import DatabaseManager
+        DatabaseManager.reset_instance()
+        from app.ui.queue_tab import refresh_view, on_pause_queue, on_start_or_resume, on_post_action_change
+        m, a, p, h = refresh_view()
+        self.assertIn("Engine State", m)
+        self.assertIsInstance(p, list)
+        self.assertIsInstance(h, list)
+
+        m_p, a_p, p_p, h_p = on_pause_queue()
+        self.assertIn("Paused", m_p)
+
+        m_r, a_r, p_r, h_r = on_start_or_resume()
+        self.assertIsInstance(m_r, str)
+
+        warn = on_post_action_change("Sleep PC [Opt-in]")
+        self.assertIn("Warning", warn)
 
 if __name__ == "__main__":
     unittest.main()

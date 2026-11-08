@@ -137,6 +137,7 @@ class LongformService:
         self,
         job_id: str,
         cancel_event = None,
+        pause_event = None,
         on_progress: Optional[Callable[[Dict], None]] = None,
         cfg_value: float = DEFAULT_CFG_VALUE,
         inference_timesteps: int = DEFAULT_INFERENCE_TIMESTEPS
@@ -144,6 +145,7 @@ class LongformService:
         """
         Executes synthesis for all pending chunks in the job.
         Skips already completed chunks (persistent checkpoint resumption).
+        Cooperates with pause_event and cancel_event at chunk boundaries.
         """
         job = self.db.get_longform_job(job_id)
         if not job:
@@ -176,17 +178,25 @@ class LongformService:
         for chk in chunks:
             # Check for cooperative cancellation
             if cancel_event and cancel_event.is_set():
+                job.status = "cancelled"
+                job.updated_at = utc_iso_now()
+                self.db.update_longform_job(job)
+                logger.info(f"Job {job_id} cancelled before chunk {chk.chunk_index}.")
+                return {"status": "cancelled", "job_id": job_id, "completed_chunks": job.completed_chunks}
+
+            # Check for cooperative pause
+            if pause_event and pause_event.is_set():
                 job.status = "paused"
                 job.updated_at = utc_iso_now()
                 self.db.update_longform_job(job)
-                logger.info(f"Job {job_id} paused at chunk {chk.chunk_index}.")
+                logger.info(f"Job {job_id} paused before chunk {chk.chunk_index}.")
                 return {"status": "paused", "job_id": job_id, "completed_chunks": job.completed_chunks}
 
             chunk_out_wav = chunks_dir / f"chunk_{chk.chunk_index:03d}.wav"
 
-            # Checkpoint check: if already completed and file exists on disk, reuse it!
-            if chk.status == "completed" and chunk_out_wav.exists():
-                logger.info(f"Chunk {chk.chunk_index} already completed. Skipping (Checkpoint resumed).")
+            # Checkpoint check: if already completed and valid file exists on disk, reuse it!
+            if chk.status == "completed" and chunk_out_wav.exists() and chunk_out_wav.stat().st_size > 100:
+                logger.info(f"Chunk {chk.chunk_index} already completed ({chunk_out_wav.stat().st_size} bytes). Skipping (Checkpoint resumed).")
                 continue
 
             # Mark chunk as processing
@@ -253,6 +263,21 @@ class LongformService:
                         "chunk_elapsed": elapsed
                     })
 
+                # Check if cancellation or pause was requested while synthesizing this chunk
+                if cancel_event and cancel_event.is_set():
+                    job.status = "cancelled"
+                    job.updated_at = utc_iso_now()
+                    self.db.update_longform_job(job)
+                    logger.info(f"Job {job_id} cancelled after chunk {chk.chunk_index}.")
+                    return {"status": "cancelled", "job_id": job_id, "completed_chunks": job.completed_chunks}
+
+                if pause_event and pause_event.is_set():
+                    job.status = "paused"
+                    job.updated_at = utc_iso_now()
+                    self.db.update_longform_job(job)
+                    logger.info(f"Job {job_id} paused after chunk {chk.chunk_index}.")
+                    return {"status": "paused", "job_id": job_id, "completed_chunks": job.completed_chunks}
+
             except Exception as e:
                 logger.error(f"Error synthesizing chunk {chk.chunk_index}: {e}", exc_info=True)
                 chk.status = "failed"
@@ -313,12 +338,14 @@ class LongformService:
         self,
         job_id: str,
         cancel_event = None,
+        pause_event = None,
         on_progress: Optional[Callable[[Dict], None]] = None
     ) -> Dict:
         """Resumes execution of an unfinished or paused longform job from the next pending chunk."""
         return self.execute_job(
             job_id=job_id,
             cancel_event=cancel_event,
+            pause_event=pause_event,
             on_progress=on_progress
         )
 

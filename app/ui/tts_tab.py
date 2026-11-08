@@ -1,10 +1,11 @@
-﻿"""
+"""
 VoiceStudio Pro — Speech Studio UI Tab.
 Flagship ElevenLabs & Descript-inspired Creative Workspace:
 - Massive, distraction-free script canvas with Khmer & English typography.
 - Contextual Inspector panel on right (speaker avatar, cloning mode, acoustic parameters).
 - Signature audio player dock with dual 48kHz WAV / 320k MP3 download.
 - Sentence-aware long-form chunk analysis and checkpoint-resumable synthesis.
+- Non-blocking "Add to Batch Queue" button for persistent multi-script workflows.
 """
 import time
 import uuid
@@ -121,7 +122,7 @@ def run_tts_generation(
         badge = status_info["badge"]
         msg = status_info["message"]
 
-        if st == "pending":
+        if st in ("pending", "queued"):
             yield None, badge, f"⏳ {msg}..."
             time.sleep(0.5)
         elif st == "processing":
@@ -266,6 +267,24 @@ def create_tts_tab():
                     steps_slider = gr.Slider(minimum=5, maximum=30, value=10, step=1, label="Inference steps")
                 generate_hero_btn = gr.Button("Generate speech", variant="primary", size="lg", elem_classes=["studio-btn-primary"])
                 longform_btn = gr.Button("Generate long-form", variant="primary", size="lg", visible=False, elem_classes=["studio-btn-primary"])
+                add_to_queue_btn = gr.Button("📥 Add to Batch Queue", variant="secondary", size="md")
+
+        def handle_add_to_batch(title, text, mode, profile, cfg, steps, workflow):
+            from app.services.batch_service import BatchService
+            svc = BatchService.get_instance()
+            is_lf = (workflow == "Long-form")
+            job_id, msg = svc.submit_batch_item(
+                title=title,
+                text=text,
+                voice_profile_id=profile,
+                mode=mode,
+                cfg_value=cfg,
+                inference_timesteps=steps,
+                force_longform=is_lf
+            )
+            if job_id:
+                return f"📥 Added to Queue: '{title}' ({msg}). Monitor in Batch Queue tab."
+            return f"❌ Could not queue: {msg}"
 
         script_editor.change(fn=on_text_changed, inputs=[script_editor], outputs=[lang_live_badge])
         workflow_mode_radio.change(
@@ -277,3 +296,8 @@ def create_tts_tab():
         chunk_analyze_btn.click(fn=analyze_longform_chunks, inputs=[script_editor], outputs=[chunk_preview_box])
         generate_hero_btn.click(fn=run_tts_generation, inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, execution_status_badge, telemetry_display])
         longform_btn.click(fn=run_longform_synthesis, inputs=[project_title_input, script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, mp3_download_file, execution_status_badge, telemetry_display])
+        add_to_queue_btn.click(
+            fn=handle_add_to_batch,
+            inputs=[project_title_input, script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider, workflow_mode_radio],
+            outputs=[execution_status_badge]
+        )

@@ -40,15 +40,30 @@ class GenerationRecord:
 @dataclass
 class QueueJob:
     id: str
-    job_type: str
-    status: str = "pending"
+    job_type: str  # 'tts', 'cloning', 'ultimate_cloning', 'longform'
+    status: str = "queued"  # draft, queued, processing, paused, completed, failed, cancelled, interrupted
     progress: float = 0.0
     status_message: str = "Queued"
     error_message: str = ""
     generation_id: Optional[str] = None
+    title: str = "Untitled Job"
+    target_text: str = ""
+    voice_profile_id: Optional[str] = None
+    voice_name: str = "Default Voice"
+    language: str = "multilingual"
+    mode: str = "tts"
+    cfg_value: float = 2.0
+    inference_timesteps: int = 10
+    total_chunks: int = 1
+    completed_chunks: int = 0
+    output_wav_path: Optional[str] = None
+    output_mp3_path: Optional[str] = None
+    retry_count: int = 0
+    priority: int = 100
     created_at: str = field(default_factory=utc_iso_now)
     started_at: Optional[str] = None
     completed_at: Optional[str] = None
+    updated_at: str = field(default_factory=utc_iso_now)
 
 @dataclass
 class LongformJob:

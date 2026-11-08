@@ -547,5 +547,11 @@ STUDIO_PRO_CSS += r"""
  .audio-actions { grid-template-columns:minmax(0,1fr) auto !important; }
  .audio-actions .mp3-export { grid-column:1 / -1; }
 }
+
+/* Batch Queue & Background Monitor */
+.queue-toolbar { display: flex !important; gap: 10px !important; margin-bottom: 18px !important; align-items: center !important; }
+.queue-toolbar .gr-button { border-radius: 8px !important; font-size: 13px !important; font-weight: 600 !important; }
+.pending-jobs-table table, .history-jobs-table table { border-collapse: separate !important; border-spacing: 0 !important; width: 100% !important; border-radius: 10px !important; overflow: hidden !important; }
+.opt-in-warning { color: #f59e0b !important; font-size: 12px !important; margin-top: 6px !important; font-weight: 500 !important; }
 """
 IPHONE_INSPIRED_CSS = STUDIO_PRO_CSS

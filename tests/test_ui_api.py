@@ -106,5 +106,22 @@ class TestVoiceStudioUI(unittest.TestCase):
         msg = cancel_current_generation()
         self.assertIn("No active job", msg)
 
+    def test_10_longform_ui_controls(self):
+        from app.ui.tts_tab import analyze_longform_chunks, run_longform_synthesis
+        # Test chunk preview
+        preview = analyze_longform_chunks("Sentence one. Sentence two.")
+        self.assertIn("Chunk Plan", preview)
+        self.assertIn("Chunks Total", preview)
+
+        # Empty preview test
+        empty_preview = analyze_longform_chunks("")
+        self.assertIn("Enter long text", empty_preview)
+
+        # Empty text synthesis error test
+        gen = run_longform_synthesis("Test Title", "", "Ordinary TTS", "", 2.0, 10)
+        res = next(gen)
+        self.assertIsNone(res[0])
+        self.assertIn("cannot be empty", res[2])
+
 if __name__ == "__main__":
     unittest.main()

@@ -26,6 +26,8 @@ storage/references/*
 !storage/references/.gitkeep
 storage/generated/*
 !storage/generated/.gitkeep
+storage/longform/*
+!storage/longform/.gitkeep
 storage/temp/*
 !storage/temp/.gitkeep
 storage/logs/*

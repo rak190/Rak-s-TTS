@@ -12,7 +12,8 @@ from app.database.models import (
     GenerationRecord,
     QueueJob,
     LongformJob,
-    LongformChunkRecord
+    LongformChunkRecord,
+    MasteringJobRecord
 )
 
 class DatabaseManager:
@@ -342,3 +343,61 @@ class DatabaseManager:
                 )
             )
             return cursor.rowcount > 0
+
+    # -------------------------------------------------------------
+    # Mastering Jobs Repository
+    # -------------------------------------------------------------
+    def create_mastering_job(self, record: MasteringJobRecord) -> MasteringJobRecord:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO mastering_jobs (
+                    id, source_type, source_id, input_audio_path, output_wav_path,
+                    output_mp3_path, preset, target_lufs, target_tp, measured_input_lufs,
+                    measured_output_lufs, measured_input_tp, measured_output_tp,
+                    filters_applied, duration_sec, processing_time_sec, status,
+                    error_message, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.id, record.source_type, record.source_id, record.input_audio_path,
+                    record.output_wav_path, record.output_mp3_path, record.preset,
+                    record.target_lufs, record.target_tp, record.measured_input_lufs,
+                    record.measured_output_lufs, record.measured_input_tp, record.measured_output_tp,
+                    record.filters_applied, record.duration_sec, record.processing_time_sec,
+                    record.status, record.error_message, record.created_at
+                )
+            )
+            return record
+
+    def get_mastering_job(self, job_id: str) -> Optional[MasteringJobRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM mastering_jobs WHERE id = ?", (job_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return MasteringJobRecord(**dict(row))
+
+    def list_mastering_jobs(self, limit: int = 50, offset: int = 0) -> List[MasteringJobRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM mastering_jobs ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                (limit, offset)
+            )
+            return [MasteringJobRecord(**dict(row)) for row in cursor.fetchall()]
+
+    def get_mastering_job_by_source(self, source_type: str, source_id: str) -> Optional[MasteringJobRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM mastering_jobs WHERE source_type = ? AND source_id = ? ORDER BY created_at DESC LIMIT 1",
+                (source_type, source_id)
+            )
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return MasteringJobRecord(**dict(row))
+

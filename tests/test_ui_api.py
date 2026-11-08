@@ -21,6 +21,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         from app.ui.tts_tab import create_tts_tab
         from app.ui.cloning_tab import create_cloning_tab
         from app.ui.library_tab import create_library_tab
+        from app.ui.mastering_tab import create_mastering_tab
         from app.ui.history_tab import create_history_tab
         from app.ui.settings_tab import create_settings_tab
 
@@ -28,6 +29,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         self.assertTrue(callable(create_dashboard_tab))
         self.assertTrue(callable(create_tts_tab))
         self.assertTrue(callable(create_cloning_tab))
+        self.assertTrue(callable(create_mastering_tab))
         self.assertTrue(callable(create_library_tab))
         self.assertTrue(callable(create_history_tab))
         self.assertTrue(callable(create_settings_tab))
@@ -122,6 +124,51 @@ class TestVoiceStudioUI(unittest.TestCase):
         res = next(gen)
         self.assertIsNone(res[0])
         self.assertIn("cannot be empty", res[2])
+
+    def test_11_mastering_tab_ui_controls(self):
+        from app.ui.mastering_tab import (
+            create_mastering_tab,
+            get_audio_source_choices,
+            get_mastering_history_rows,
+            inspect_source_audio,
+            run_mastering_process
+        )
+        self.assertTrue(callable(create_mastering_tab))
+
+        # Check source choices
+        choices = get_audio_source_choices()
+        self.assertIsInstance(choices, list)
+        self.assertGreater(len(choices), 0)
+
+        # Check history rows
+        rows = get_mastering_history_rows()
+        self.assertIsInstance(rows, list)
+        if rows:
+            self.assertEqual(len(rows[0]), 9)
+
+        # Check inspection with invalid / empty
+        html, path = inspect_source_audio("", None)
+        self.assertIn("Select an audio file", html)
+        self.assertIsNone(path)
+
+        # Check inspection on real file if available
+        real_file = None
+        for c in choices:
+            if c[1] and Path(c[1]).exists():
+                real_file = c[1]
+                break
+
+        if real_file:
+            html, path = inspect_source_audio(real_file, None)
+            self.assertIn("Acoustic Inspection Report", html)
+            self.assertIn("Loudness (LUFS)", html)
+            self.assertEqual(path, real_file)
+
+        # Test empty input error in mastering process
+        res = run_mastering_process(
+            "", None, "podcast", -16.0, -1.5, True, True, True, True, True
+        )
+        self.assertIn("Please select a generated audio file", res[0])
 
 if __name__ == "__main__":
     unittest.main()

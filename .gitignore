@@ -28,6 +28,8 @@ storage/generated/*
 !storage/generated/.gitkeep
 storage/longform/*
 !storage/longform/.gitkeep
+storage/mastered/*
+!storage/mastered/.gitkeep
 storage/temp/*
 !storage/temp/.gitkeep
 storage/logs/*

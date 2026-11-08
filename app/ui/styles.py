@@ -96,8 +96,19 @@ body, .gradio-container {
 }
 
 /* Card Containers & Panels */
-.gr-box, .gr-panel, .tabitem {
+.gr-box, .gr-panel, .tabitem, .cu-card {
     border-radius: var(--ios-radius) !important;
+    background: var(--ios-card-bg) !important;
+    border: 1px solid var(--ios-card-border) !important;
+    box-shadow: var(--ios-card-shadow) !important;
+    padding: 16px !important;
+    margin-bottom: 14px !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.cu-card:hover {
+    box-shadow: var(--ios-card-shadow-hover) !important;
+}
     border: 1px solid var(--ios-card-border) !important;
     background: var(--ios-card-bg) !important;
     box-shadow: var(--ios-card-shadow);

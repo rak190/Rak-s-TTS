@@ -4,6 +4,7 @@ from app.ui.dashboard_tab import create_dashboard_tab
 from app.ui.library_tab import create_library_tab
 from app.ui.cloning_tab import create_cloning_tab
 from app.ui.tts_tab import create_tts_tab
+from app.ui.mastering_tab import create_mastering_tab
 from app.ui.history_tab import create_history_tab
 from app.ui.settings_tab import create_settings_tab
 from app.ui.styles import IPHONE_INSPIRED_CSS
@@ -24,6 +25,7 @@ def build_app_ui() -> gr.Blocks:
             create_dashboard_tab()
             create_tts_tab()
             create_cloning_tab()
+            create_mastering_tab()
             create_library_tab()
             create_history_tab()
             create_settings_tab()

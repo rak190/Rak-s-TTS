@@ -83,3 +83,26 @@ class LongformChunkRecord:
     error_message: str = ""
     created_at: str = field(default_factory=utc_iso_now)
     completed_at: Optional[str] = None
+
+@dataclass
+class MasteringJobRecord:
+    id: str
+    source_type: str  # 'generation', 'longform', 'custom'
+    input_audio_path: str
+    output_wav_path: str
+    preset: str
+    target_lufs: float
+    target_tp: float
+    source_id: Optional[str] = None
+    output_mp3_path: Optional[str] = None
+    measured_input_lufs: Optional[float] = None
+    measured_output_lufs: Optional[float] = None
+    measured_input_tp: Optional[float] = None
+    measured_output_tp: Optional[float] = None
+    filters_applied: str = ""
+    duration_sec: float = 0.0
+    processing_time_sec: float = 0.0
+    status: str = "completed"
+    error_message: str = ""
+    created_at: str = field(default_factory=utc_iso_now)
+

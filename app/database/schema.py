@@ -2,7 +2,7 @@
 import sqlite3
 from datetime import datetime, timezone
 
-CURRENT_SCHEMA_VERSION = 2
+CURRENT_SCHEMA_VERSION = 3
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -98,11 +98,36 @@ CREATE TABLE IF NOT EXISTS longform_chunks (
     FOREIGN KEY (job_id) REFERENCES longform_jobs(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS mastering_jobs (
+    id TEXT PRIMARY KEY,
+    source_type TEXT NOT NULL,
+    source_id TEXT,
+    input_audio_path TEXT NOT NULL,
+    output_wav_path TEXT NOT NULL,
+    output_mp3_path TEXT,
+    preset TEXT NOT NULL,
+    target_lufs REAL NOT NULL,
+    target_tp REAL NOT NULL,
+    measured_input_lufs REAL,
+    measured_output_lufs REAL,
+    measured_input_tp REAL,
+    measured_output_tp REAL,
+    filters_applied TEXT DEFAULT '',
+    duration_sec REAL DEFAULT 0.0,
+    processing_time_sec REAL DEFAULT 0.0,
+    status TEXT NOT NULL DEFAULT 'completed',
+    error_message TEXT DEFAULT '',
+    created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_generations_created ON generations(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_voice_profiles_created ON voice_profiles(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_longform_jobs_created ON longform_jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_longform_chunks_job ON longform_chunks(job_id, chunk_index);
+CREATE INDEX IF NOT EXISTS idx_mastering_jobs_created ON mastering_jobs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_mastering_jobs_source ON mastering_jobs(source_type, source_id);
+
 """
 
 def initialize_database(conn: sqlite3.Connection):

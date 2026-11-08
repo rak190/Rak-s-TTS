@@ -1,0 +1,126 @@
+{
+  "project": "VoiceStudio AI - Local Feasibility Stage 1",
+  "engine": "OpenBMB/VoxCPM2",
+  "hardware_environment": {
+    "device_model": "HP ENVY x360 15-es2xxx",
+    "cpu": "Intel Core i5-1240P (12 Cores: 4P + 8E, 16 Threads)",
+    "gpu": "Intel Iris Xe Graphics (Integrated, 1GB Adapter RAM, No CUDA)",
+    "ram_total_gb": 15.72,
+    "ram_available_gb": 6.84,
+    "storage_c_free_gb": 27.09,
+    "storage_d_free_gb": 20.96,
+    "os": "Windows 11 64-bit (Build 26300)"
+  },
+  "test_categories": {
+    "khmer_only": [
+      {
+        "id": "KH-01",
+        "name": "Khmer Conversational Greeting",
+        "text": "សួស្តី! ខ្ញុំរីករាយណាស់ដែលបានជួបអ្នកនៅថ្ងៃនេះ។",
+        "phonetic_transcription": "Suosdei! Khnhom rik-reay nas dael ban chuob anak now thngai nih.",
+        "english_meaning": "Hello! I am very glad to meet you today.",
+        "linguistic_complexity": "Basic conversational, high-frequency syllables, simple vowels.",
+        "expected_pronunciation_challenges": "Tone/register separation between 'ស' (first register) and 'ញ' (second register in 'ខ្ញុំ').",
+        "mode": "Ordinary TTS & Controllable Cloning"
+      },
+      {
+        "id": "KH-02",
+        "name": "Khmer Complex Orthography & Coeng Clusters",
+        "text": "ប្រទេសកម្ពុជាសម្បូរទៅដោយសម្បត្តិវប្បធម៌ និងប្រាសាទបុរាណជាច្រើនដូចជាប្រាសាទអង្គរវត្ត។",
+        "phonetic_transcription": "Prates Kampuchea sambor tow doy sambat vobbathoa ning prasat boran chea chraen dochchea prasat Angkor Wat.",
+        "english_meaning": "Cambodia is rich in cultural heritage and ancient temples such as Angkor Wat temple.",
+        "linguistic_complexity": "High. Subscript consonants (ជើងក, ជើងព, ជើងវ, ជើងត), Pali/Sanskrit loanwords, continuous script without inter-word spacing.",
+        "expected_pronunciation_challenges": "Coeng consonant clusters (ម្ព, ម្ប, ប្ប) must not insert intrusive schwa vowels; word boundary segmentation.",
+        "mode": "Ordinary TTS & Ultimate Cloning"
+      },
+      {
+        "id": "KH-03",
+        "name": "Khmer Technical & AI Domain",
+        "text": "បច្ចេកវិទ្យាបញ្ញាសិប្បនិម្មិត និងការបង្កើតសំឡេងដោយកុំព្យូទ័រកំពុងមានការរីកចម្រើនយ៉ាងឆាប់រហ័ស។",
+        "phonetic_transcription": "Bachekvittyea banhha seppanimmot ning kar bangkeut samleng doy kompyuto kampoung mean kar rikchamroen yang chhab rohas.",
+        "english_meaning": "Artificial intelligence technology and computer speech synthesis are progressing very rapidly.",
+        "linguistic_complexity": "Medium-High. Modern technical neologisms and loanwords.",
+        "expected_pronunciation_challenges": "Pronunciation of loanword 'កុំព្យូទ័រ' (computer) and composite neologism 'បញ្ញាសិប្បនិម្មិត' (AI).",
+        "mode": "Ordinary TTS"
+      }
+    ],
+    "english_only": [
+      {
+        "id": "EN-01",
+        "name": "English Conversational Greeting",
+        "text": "Hello and welcome to VoiceStudio AI, running entirely on your local Windows computer.",
+        "linguistic_complexity": "Low. Standard conversational syntax and phonemes.",
+        "expected_pronunciation_challenges": "Natural intonation and smooth cadence.",
+        "mode": "Ordinary TTS & Controllable Cloning"
+      },
+      {
+        "id": "EN-02",
+        "name": "English Phonetically Balanced Benchmark",
+        "text": "The quick brown fox jumps over the lazy dog near the vibrant, sparkling riverbank.",
+        "linguistic_complexity": "Medium. Covers all English alphabetic phonemes, plosives, fricatives, and nasals.",
+        "expected_pronunciation_challenges": "Clarity of fricatives (/f/, /v/, /z/, /th/) and consonant clusters (/br/, /sp/, /nk/).",
+        "mode": "Controllable Cloning"
+      },
+      {
+        "id": "EN-03",
+        "name": "English Technical AI Narrative",
+        "text": "VoxCPM2 is a tokenizer-free diffusion autoregressive foundation model supporting forty-eight kilohertz studio-grade speech output.",
+        "linguistic_complexity": "High. Technical terminology, multi-syllabic compound nouns.",
+        "expected_pronunciation_challenges": "Stress placement on 'autoregressive' and numerical phonemes.",
+        "mode": "Ultimate Cloning"
+      }
+    ],
+    "khmer_english_mixed": [
+      {
+        "id": "MX-01",
+        "name": "Khmer-English Code-Switching (Technical)",
+        "text": "សូមស្វាគមន៍មកកាន់ VoiceStudio AI ដែលដំណើរការលើ Local Computer របស់អ្នក។",
+        "english_meaning": "Welcome to VoiceStudio AI running on your Local Computer.",
+        "code_switch_points": ["VoiceStudio AI", "Local Computer"],
+        "expected_pronunciation_challenges": "Smooth transition between Khmer phonological system and English phonemes without pitch drop or stuttering.",
+        "mode": "Controllable & Ultimate Cloning"
+      },
+      {
+        "id": "MX-02",
+        "name": "Khmer-English Code-Switching (Development Stack)",
+        "text": "កម្មវិធីនេះបង្កើតឡើងដោយ Python និង Gradio សម្រាប់គ្រប់គ្រង Voice Profile ក្នុង SQLite Database។",
+        "english_meaning": "This application is built with Python and Gradio to manage Voice Profiles in a SQLite Database.",
+        "code_switch_points": ["Python", "Gradio", "Voice Profile", "SQLite Database"],
+        "expected_pronunciation_challenges": "Acronyms ('SQLite') and framework names ('Gradio', 'Python') inside Khmer sentence grammar.",
+        "mode": "Ordinary TTS"
+      }
+    ],
+    "reference_audio_cases": [
+      {
+        "id": "REF-01",
+        "type": "Short Reference Audio",
+        "duration_seconds": 12.5,
+        "sample_rate": 16000,
+        "channels": 1,
+        "transcript": "Hello, this is a clean sample recording used to evaluate speaker timbre cloning.",
+        "target_mode": "Controllable Voice Cloning",
+        "notes": "Short, clear, zero background noise."
+      },
+      {
+        "id": "REF-02",
+        "type": "Long Reference Audio (Unsegmented)",
+        "duration_seconds": 180.0,
+        "sample_rate": 16000,
+        "channels": 1,
+        "transcript": null,
+        "target_mode": "Automated Preprocessing & Golden Slice Extraction",
+        "notes": "3-minute multi-utterance recording. Must be processed by VAD into a 15-25s Golden Reference slice before inference."
+      },
+      {
+        "id": "REF-03",
+        "type": "Golden Reference with Matching Transcript",
+        "duration_seconds": 18.2,
+        "sample_rate": 16000,
+        "channels": 1,
+        "transcript": "បច្ចេកវិទ្យាសំឡេង AI ជួយឱ្យយើងអាចបង្កើតសំឡេងមនុស្សបានយ៉ាងរលូន និងមានលក្ខណៈធម្មជាតិបំផុត។",
+        "target_mode": "Ultimate Cloning",
+        "notes": "Exact verbatim matching transcript provided. Enables cross-attention acoustic-phonetic alignment."
+      }
+    ]
+  }
+}

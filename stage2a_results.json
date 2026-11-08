@@ -1,0 +1,127 @@
+{
+  "runtime": "Official VoxCPM2 (voxcpm-2.0.3, torch-2.15.0+cpu)",
+  "quantization": "bfloat16 (BaseLM + CFM DiT + AudioVAE V2)",
+  "hardware": "Intel Core i5-1240P (4P+8E cores, 16 threads), 16GB RAM, Intel Iris Xe",
+  "tests": [
+    {
+      "test_id": "T1-LOAD",
+      "name": "Model Loading",
+      "load_time_sec": 22.63,
+      "peak_ram_mb": 6280.3,
+      "sample_rate_hz": 48000,
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T2-KH-TTS",
+      "name": "Khmer Text-Only TTS",
+      "text": "សួស្តី! ខ្ញុំរីករាយណាស់ដែលបានជួបអ្នកនៅថ្ងៃនេះ។",
+      "gen_time_sec": 101.49,
+      "audio_dur_sec": 3.04,
+      "rtf": 33.38,
+      "peak_ram_mb": 5963.3,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t2_khmer_text_only.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T3-EN-TTS",
+      "name": "English Text-Only TTS",
+      "text": "Hello and welcome to VoiceStudio AI, running locally on your computer.",
+      "gen_time_sec": 116.99,
+      "audio_dur_sec": 4.64,
+      "rtf": 25.21,
+      "peak_ram_mb": 6125.7,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t3_english_text_only.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T4-KH-CLONE",
+      "name": "Khmer Voice Cloning (Cross-Lingual Reference)",
+      "text": "ប្រទេសកម្ពុជាសម្បូរទៅដោយសម្បត្តិវប្បធម៌ និងប្រាសាទបុរាណ។",
+      "ref_audio": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t3_english_text_only.wav",
+      "gen_time_sec": 142.39,
+      "audio_dur_sec": 3.84,
+      "rtf": 37.08,
+      "peak_ram_mb": 7848.2,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t4_khmer_voice_cloned.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T5-EN-CLONE",
+      "name": "English Voice Cloning",
+      "text": "This is a brand new sentence spoken in the cloned speaker voice.",
+      "ref_audio": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t3_english_text_only.wav",
+      "gen_time_sec": 98.81,
+      "audio_dur_sec": 3.52,
+      "rtf": 28.07,
+      "peak_ram_mb": 7893.8,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t5_english_voice_cloned.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T6-MIXED-TTS",
+      "name": "Khmer-English Mixed Text Code-Switching",
+      "text": "សូមស្វាគមន៍មកកាន់ VoiceStudio AI លើ Local Computer។",
+      "gen_time_sec": 99.02,
+      "audio_dur_sec": 3.52,
+      "rtf": 28.13,
+      "peak_ram_mb": 7872.1,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t6_mixed_code_switching.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T7-ULT-CLONE",
+      "name": "Ultimate Cloning (Prompt Audio + Verbatim Transcript)",
+      "prompt_text": "Hello and welcome to VoiceStudio AI, running locally on your computer.",
+      "target_text": "VoiceStudio AI enables continuous speech synthesis with perfect accent matching.",
+      "gen_time_sec": 155.8,
+      "audio_dur_sec": 5.6,
+      "rtf": 27.82,
+      "peak_ram_mb": 7815.5,
+      "sample_rate_hz": 48000,
+      "output_file": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\t7_ultimate_cloning.wav",
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T8-REF-LENGTH",
+      "name": "Short vs Longer Reference Audio Evaluation",
+      "ref_audio": "d:\\Coding\\Rak'sTTS\\benchmark_outputs\\ref_5s.wav",
+      "gen_time_sec": 74.91,
+      "audio_dur_sec": 2.72,
+      "rtf": 27.54,
+      "status": "SUCCESS"
+    },
+    {
+      "test_id": "T9-REPEAT-STABILITY",
+      "name": "Repeated Generation Stability",
+      "iterations": [
+        {
+          "iteration": 1,
+          "elapsed_sec": 75.34,
+          "duration_sec": 3.04,
+          "rtf": 24.78,
+          "ram_rss_mb": 6132.0
+        },
+        {
+          "iteration": 2,
+          "elapsed_sec": 86.62,
+          "duration_sec": 3.52,
+          "rtf": 24.61,
+          "ram_rss_mb": 6157.6
+        },
+        {
+          "iteration": 3,
+          "elapsed_sec": 104.55,
+          "duration_sec": 4.16,
+          "rtf": 25.13,
+          "ram_rss_mb": 6197.4
+        }
+      ],
+      "status": "SUCCESS"
+    }
+  ]
+}

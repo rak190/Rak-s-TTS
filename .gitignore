@@ -1,0 +1,42 @@
+# Virtual Environments
+.venv/
+.venv-test/
+venv/
+env/
+
+# Model Weights & Caches
+models/
+hf_cache/
+*.safetensors
+*.pth
+*.bin
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+
+# Application Audio & Temp Storage (preserve folder structure via .gitkeep)
+storage/voices/*
+!storage/voices/.gitkeep
+storage/references/*
+!storage/references/.gitkeep
+storage/generated/*
+!storage/generated/.gitkeep
+storage/temp/*
+!storage/temp/.gitkeep
+storage/logs/*
+!storage/logs/.gitkeep
+
+# SQLite Database
+*.db
+*.db-journal
+*.sqlite3
+
+# OS Artifacts
+Thumbs.db
+desktop.ini
+.DS_Store

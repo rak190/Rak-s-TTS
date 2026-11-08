@@ -170,5 +170,45 @@ class TestVoiceStudioUI(unittest.TestCase):
         )
         self.assertIn("Please select a generated audio file", res[0])
 
+    def test_12_settings_and_backup_ui_controls(self):
+        from app.ui.settings_tab import (
+            get_voice_choices,
+            get_backup_table_rows,
+            get_backup_choices,
+            handle_save_preferences,
+            handle_create_db_backup,
+            handle_create_full_backup,
+            handle_restore_backup,
+            handle_open_folder
+        )
+
+        # Voice choices
+        voices = get_voice_choices()
+        self.assertIsInstance(voices, list)
+        self.assertGreaterEqual(len(voices), 1)
+
+        # Save preferences
+        msg = handle_save_preferences("km", "", "dark", "wav", True, False)
+        self.assertIn("Preferences saved", msg)
+
+        # Folder opening
+        res = handle_open_folder("generated")
+        self.assertIn("generated", res.lower())
+
+        # Backup creation via UI handlers
+        msg_db, rows_db, drop_db = handle_create_db_backup()
+        self.assertIn("Database backup created", msg_db)
+        self.assertGreater(len(rows_db), 0)
+
+        msg_full, rows_full, drop_full = handle_create_full_backup()
+        self.assertIn("Full Studio Archive created", msg_full)
+        self.assertGreater(len(rows_full), 0)
+
+        # Unconfirmed restore attempt
+        choices = get_backup_choices()
+        self.assertGreater(len(choices), 0)
+        res_unconfirmed, _ = handle_restore_backup(choices[0][1], False)
+        self.assertIn("Confirmation required", res_unconfirmed)
+
 if __name__ == "__main__":
     unittest.main()

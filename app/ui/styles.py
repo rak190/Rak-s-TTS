@@ -68,6 +68,17 @@ body, .gradio-container {
     color: var(--ios-text-primary) !important;
     -webkit-font-smoothing: antialiased;
     letter-spacing: -0.015em;
+    line-height: 1.55;
+}
+
+/* Khmer Script & Multilingual Typography Refinement */
+textarea, input, p, span, div, td, th {
+    line-height: 1.6 !important;
+}
+
+:lang(km), [data-lang="km"] {
+    font-family: "Kantumruy Pro", "Khmer OS Battambang", -apple-system, sans-serif !important;
+    line-height: 1.7 !important;
 }
 
 /* Header Banner - Frosted Glass Cupertino Style */

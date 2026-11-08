@@ -401,3 +401,38 @@ class DatabaseManager:
                 return None
             return MasteringJobRecord(**dict(row))
 
+    # -------------------------------------------------------------
+    # Settings Repository
+    # -------------------------------------------------------------
+    def get_setting(self, key: str, default: Optional[str] = None) -> Optional[str]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+            row = cursor.fetchone()
+            if not row or row["value"] is None:
+                return default
+            return str(row["value"])
+
+    def set_setting(self, key: str, value: str) -> bool:
+        from app.database.models import utc_iso_now
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO settings (key, value, updated_at)
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET
+                    value = excluded.value,
+                    updated_at = excluded.updated_at
+                """,
+                (key, str(value), utc_iso_now())
+            )
+            return cursor.rowcount > 0
+
+    def get_all_settings(self) -> Dict[str, str]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT key, value FROM settings")
+            return {row["key"]: row["value"] for row in cursor.fetchall()}
+
+

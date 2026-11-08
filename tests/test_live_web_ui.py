@@ -122,6 +122,23 @@ class TestLiveWebUI(unittest.TestCase):
         self.assertTrue(Path(download_mp3).exists())
         self.assertGreater(len(history_rows), 0)
 
+    def test_05_verify_settings_and_backup_in_live_config(self):
+        self.assertTrue(self.server_available)
+        components = self.config.get("components", [])
+        all_props = [c.get("props", {}) for c in components]
+        all_labels_and_values = [
+            str(p.get("label") or p.get("value") or "") for p in all_props
+        ]
+        text_dump = " ".join(all_labels_and_values)
+
+        self.assertIn("Default Generation Language", text_dump)
+        self.assertIn("Save Preferences", text_dump)
+        self.assertIn("Open Local Audio Folders", text_dump)
+        self.assertIn("Create Database Backup", text_dump)
+        self.assertIn("Create Full Studio Archive", text_dump)
+        self.assertIn("Restore from Backup Archive", text_dump)
+        self.assertIn("100% Offline Local Privacy Guarantee", text_dump)
+
 
 if __name__ == "__main__":
     unittest.main()

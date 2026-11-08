@@ -90,11 +90,12 @@ def handle_delete_profile(selected: str, confirm: bool):
 
 def create_library_tab():
     with gr.Tab("🎙️ Voice Library", id="tab_library"):
-        gr.Markdown("## 🎙️ Voice Profile Library & Asset Management")
-        gr.Markdown("Inspect saved voices, preview 48kHz reference clips, edit transcripts, and replace reference audio.")
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("## 🎙️ Voice Profile Library & Asset Management")
+            gr.Markdown("Inspect saved voices, preview 48kHz reference clips, edit transcripts, and replace reference audio.")
 
         with gr.Row():
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, elem_classes=["cu-card"]):
                 profile_selector = gr.Dropdown(
                     label="Select Voice Profile",
                     choices=get_profile_choices(),
@@ -103,7 +104,7 @@ def create_library_tab():
                 refresh_lib_btn = gr.Button("🔄 Refresh Library", variant="secondary")
                 summary_view = gr.Markdown(value="Select a profile to view details.")
 
-            with gr.Column(scale=2):
+            with gr.Column(scale=2, elem_classes=["cu-card"]):
                 with gr.Group():
                     gr.Markdown("### Profile Metadata Editor")
                     edit_name = gr.Textbox(label="Profile Name")

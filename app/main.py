@@ -163,6 +163,7 @@ def main():
     parser.add_argument("--port", type=int, default=SERVER_PORT, help="Port to bind (default: 7860)")
     parser.add_argument("--preload", action="store_true", help="Pre-load VoxCPM2 model on startup")
     parser.add_argument("--no-browser", action="store_true", help="Do not open web browser automatically")
+    parser.add_argument("--tab", default=None, help="Initial tab ID to select on startup")
     args = parser.parse_args()
 
     # Pre-flight check: Detect running instance or port conflict
@@ -203,7 +204,7 @@ def main():
     if auto_open:
         schedule_browser_open(app_url, delay_sec=1.5)
 
-    demo = build_app_ui()
+    demo = build_app_ui(default_tab=args.tab)
     logger.info(f"Starting VoiceStudio AI Web Studio at {app_url}")
     import gradio as gr
     from app.ui.styles import IPHONE_INSPIRED_CSS

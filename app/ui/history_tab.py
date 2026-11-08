@@ -1,4 +1,4 @@
-"""Generation History UI tab."""
+"""Generation History UI tab with Cupertino design."""
 import gradio as gr
 from pathlib import Path
 from typing import List
@@ -31,16 +31,21 @@ def select_history_record(evt: gr.SelectData, history_data):
     gen_id = row[0]
     
     details_md = f"""
-### Record ID: `{gen_id}`
-* **Created:** `{row[1]}`
-* **Mode:** `{row[2]}`
-* **Voice:** `{row[3]}`
-* **Language:** `{row[4]}`
-* **Duration:** `{row[5]}`
-* **Generation Time:** `{row[6]}`
-* **RTF:** `{row[7]}`
-* **Full Text:** {row[8]}
-* **File Path:** `{audio_path}`
+### 🎙️ Generation Record: `{gen_id}`
+
+| Attribute | Details |
+| :--- | :--- |
+| **Created Timestamp** | `{row[1]}` |
+| **Generation Mode** | `{row[2]}` |
+| **Voice Profile** | `{row[3]}` |
+| **Language** | `{row[4]}` |
+| **Speech Duration** | `{row[5]}` |
+| **Compute Time** | `{row[6]}` |
+| **Real-Time Factor (RTF)** | `{row[7]}` |
+| **File Location** | `{audio_path}` |
+
+**Full Text Transcript:**
+> {row[8]}
 """
     player_path = audio_path if Path(audio_path).exists() else None
     return player_path, details_md
@@ -55,23 +60,25 @@ def handle_delete_history(evt: gr.SelectData, history_data):
 
 def create_history_tab():
     with gr.Tab("📜 Generation History", id="tab_history"):
-        gr.Markdown("## Speech Generation History")
-        gr.Markdown("Review past syntheses, replay audio, inspect telemetry, and manage disk files.")
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("## 📜 Speech Generation History")
+            gr.Markdown("Review past syntheses, replay audio, inspect telemetry, and manage disk files.")
 
         with gr.Row():
             refresh_hist_btn = gr.Button("🔄 Refresh History", variant="secondary")
 
-        history_table = gr.Dataframe(
-            headers=["ID", "Timestamp", "Mode", "Voice", "Lang", "Duration", "Gen Time", "RTF", "Text Snippet", "Audio Path"],
-            datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "str"],
-            value=get_history_rows,
-            interactive=False
-        )
+        with gr.Column(elem_classes=["cu-card"]):
+            history_table = gr.Dataframe(
+                headers=["ID", "Timestamp", "Mode", "Voice", "Lang", "Duration", "Gen Time", "RTF", "Text Snippet", "Audio Path"],
+                datatype=["str", "str", "str", "str", "str", "str", "str", "str", "str", "str"],
+                value=get_history_rows,
+                interactive=False
+            )
 
         with gr.Row():
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, elem_classes=["cu-card"]):
                 hist_audio_player = gr.Audio(label="Replay Audio", type="filepath")
-            with gr.Column(scale=2):
+            with gr.Column(scale=2, elem_classes=["cu-card"]):
                 hist_details = gr.Markdown(value="Click a row above to inspect generation details.")
 
         refresh_hist_btn.click(fn=get_history_rows, outputs=[history_table])

@@ -211,17 +211,18 @@ def get_profile_dropdown_choices() -> List[str]:
 
 def create_cloning_tab():
     with gr.Tab("✂️ Voice Cloning Studio", id="tab_cloning"):
-        gr.Markdown("## 🎙️ Voice Cloning Studio & Reference Audio Management")
-        gr.Markdown(
-            "Upload or record reference speech (1–5 minutes), inspect acoustic quality, "
-            "select an optimal reference slice, and save a reusable Voice Profile for offline cloning."
-        )
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("## 🎙️ Voice Cloning Studio & Reference Audio Management")
+            gr.Markdown(
+                "Upload or record reference speech (1–5 minutes), inspect acoustic quality, "
+                "select an optimal reference slice, and save a reusable Voice Profile for offline cloning."
+            )
 
         # -------------------------------------------------------------
         # STEP 1 & 2: Audio Source & Acoustic Quality Inspection
         # -------------------------------------------------------------
         with gr.Row():
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, elem_classes=["cu-card"]):
                 gr.Markdown("### Step 1: Audio Source (Upload or Microphone)")
                 upload_box = gr.Audio(
                     label="Reference Audio (WAV, MP3, M4A, 1–5 min)",
@@ -230,7 +231,7 @@ def create_cloning_tab():
                 )
                 inspection_view = gr.Markdown(value="Upload or record an audio file to inspect acoustic quality.")
 
-            with gr.Column(scale=1):
+            with gr.Column(scale=1, elem_classes=["cu-card"]):
                 gr.Markdown("### Step 2: Reference Segment Trimming (Optional)")
                 gr.Markdown("Select a clean, continuous speech segment. Use comparison presets or customize:")
 
@@ -249,71 +250,69 @@ def create_cloning_tab():
                 preview_player = gr.Audio(label="Trimmed Segment Preview (48kHz PCM_16)", type="filepath")
                 preview_msg = gr.Label(label="Trim Status", value="Ready")
 
-        gr.Markdown("---")
-
         # -------------------------------------------------------------
         # STEP 3: Voice Profile Creation & Metadata
         # -------------------------------------------------------------
-        gr.Markdown("### Step 3: Voice Profile Metadata & Persistence")
-        with gr.Row():
-            with gr.Column(scale=1):
-                prof_name = gr.Textbox(label="Voice Profile Name (Required)", placeholder="e.g. Sokha Natural Voice")
-                prof_desc = gr.Textbox(label="Description", placeholder="e.g. Articulate, calm Khmer documentary speaker", lines=2)
-                prof_lang = gr.Radio(choices=["multilingual", "khmer", "english"], value="multilingual", label="Speaker Primary Language")
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("### Step 3: Voice Profile Metadata & Persistence")
+            with gr.Row():
+                with gr.Column(scale=1):
+                    prof_name = gr.Textbox(label="Voice Profile Name (Required)", placeholder="e.g. Sokha Natural Voice")
+                    prof_desc = gr.Textbox(label="Description", placeholder="e.g. Articulate, calm Khmer documentary speaker", lines=2)
+                    prof_lang = gr.Radio(choices=["multilingual", "khmer", "english"], value="multilingual", label="Speaker Primary Language")
 
-            with gr.Column(scale=1):
-                prof_trans = gr.Textbox(
-                    label="Exact Verbatim Transcript of Reference Segment",
-                    placeholder="Enter what is spoken in the reference segment. Required for Hi-Fi / Ultimate Cloning...",
-                    lines=4
-                )
-                create_prof_btn = gr.Button("✨ Create & Save Voice Profile", variant="primary")
-                create_status = gr.Label(label="Creation Status", value="Ready")
-
-        gr.Markdown("---")
+                with gr.Column(scale=1):
+                    prof_trans = gr.Textbox(
+                        label="Exact Verbatim Transcript of Reference Segment",
+                        placeholder="Enter what is spoken in the reference segment. Required for Hi-Fi / Ultimate Cloning...",
+                        lines=4
+                    )
+                    create_prof_btn = gr.Button("✨ Create & Save Voice Profile", variant="primary")
+                    create_status = gr.Label(label="Creation Status", value="Ready")
 
         # -------------------------------------------------------------
         # STEP 4: Built-in Voice Cloning Test Generation Area
         # -------------------------------------------------------------
-        gr.Markdown("### Step 4: Test Voice Cloning (Immediate Offline Verification)")
-        gr.Markdown("Generate speech immediately with your newly created or saved voice profile:")
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("### Step 4: Test Voice Cloning (Immediate Offline Verification)")
+            gr.Markdown("Generate speech immediately with your newly created or saved voice profile:")
 
-        with gr.Row():
-            with gr.Column(scale=1):
-                test_profile_dropdown = gr.Dropdown(
-                    label="Target Voice Profile",
-                    choices=get_profile_dropdown_choices(),
-                    value=get_profile_dropdown_choices()[0] if get_profile_dropdown_choices() else None
-                )
-                test_mode_radio = gr.Radio(
-                    choices=[
-                        "Controllable Voice Cloning (Reference Audio only)",
-                        "Hi-Fi Voice Cloning (Prompt + Transcript)"
-                    ],
-                    value="Controllable Voice Cloning (Reference Audio only)",
-                    label="Cloning Technique"
-                )
+            with gr.Row():
+                with gr.Column(scale=1):
+                    test_profile_dropdown = gr.Dropdown(
+                        label="Target Voice Profile",
+                        choices=get_profile_dropdown_choices(),
+                        value=get_profile_dropdown_choices()[0] if get_profile_dropdown_choices() else None
+                    )
+                    test_mode_radio = gr.Radio(
+                        choices=[
+                            "Controllable Voice Cloning (Reference Audio only)",
+                            "Hi-Fi Voice Cloning (Prompt + Transcript)"
+                        ],
+                        value="Controllable Voice Cloning (Reference Audio only)",
+                        label="Cloning Technique"
+                    )
 
-                gr.Markdown("#### Quick Sample Prompts:")
-                with gr.Row():
-                    kh_sample_btn = gr.Button("🇰🇭 Khmer Sample", variant="secondary")
-                    en_sample_btn = gr.Button("🇬🇧 English Sample", variant="secondary")
-                    mx_sample_btn = gr.Button("🌐 Mixed Sample", variant="secondary")
+                    gr.Markdown("#### Quick Sample Prompts:")
+                    with gr.Row():
+                        kh_sample_btn = gr.Button("🇰🇭 Khmer Sample", variant="secondary")
+                        en_sample_btn = gr.Button("🇬🇧 English Sample", variant="secondary")
+                        mx_sample_btn = gr.Button("🌐 Mixed Sample", variant="secondary")
 
-                test_text_input = gr.Textbox(
-                    label="Test Text to Synthesize",
-                    value=KHMER_SAMPLE_PROMPT,
-                    lines=3
-                )
+                    test_text_input = gr.Textbox(
+                        label="Test Text to Synthesize",
+                        value=KHMER_SAMPLE_PROMPT,
+                        lines=3
+                    )
 
-                with gr.Row():
-                    test_gen_btn = gr.Button("🎙️ Test Generate Speech (CPU Queue)", variant="primary")
-                    test_refresh_btn = gr.Button("🔄 Refresh Profile List", variant="secondary")
+                    with gr.Row():
+                        test_gen_btn = gr.Button("🎙️ Test Generate Speech (CPU Queue)", variant="primary")
+                        test_refresh_btn = gr.Button("🔄 Refresh Profile List", variant="secondary")
 
-            with gr.Column(scale=1):
-                test_job_status = gr.Label(label="Generation Status", value="Ready to generate.")
-                test_audio_player = gr.Audio(label="Cloned Speech Output (48kHz WAV)", type="filepath")
-                test_telemetry_display = gr.Markdown(value="Telemetry metrics will appear here after generation.")
+                with gr.Column(scale=1):
+                    test_job_status = gr.Label(label="Generation Status", value="Ready to generate.")
+                    test_audio_player = gr.Audio(label="Cloned Speech Output (48kHz WAV)", type="filepath")
+                    test_telemetry_display = gr.Markdown(value="Telemetry metrics will appear here after generation.")
 
         # -------------------------------------------------------------
         # Event Handlers

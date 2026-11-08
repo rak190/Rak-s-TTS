@@ -230,11 +230,12 @@ def run_longform_synthesis(
 
 def create_tts_tab():
     with gr.Tab("🔊 Text-to-Speech Studio", id="tab_tts"):
-        gr.Markdown("## 🎙️ Multilingual Text-to-Speech Studio")
-        gr.Markdown(
-            "Synthesize natural speech in Khmer, English, or Mixed code-switching. "
-            "Choose between fast single-pass synthesis or the long-form audiobook & article studio."
-        )
+        with gr.Column(elem_classes=["cu-card"]):
+            gr.Markdown("## 🎙️ Multilingual Text-to-Speech Studio")
+            gr.Markdown(
+                "Synthesize natural speech in Khmer, English, or Mixed code-switching. "
+                "Choose between fast single-pass synthesis or the long-form audiobook & article studio."
+            )
 
         with gr.Tabs():
             # ---------------------------------------------------------
@@ -242,7 +243,7 @@ def create_tts_tab():
             # ---------------------------------------------------------
             with gr.TabItem("⚡ Standard Speech Synthesis"):
                 with gr.Row():
-                    with gr.Column(scale=2):
+                    with gr.Column(scale=2, elem_classes=["cu-card"]):
                         text_input = gr.Textbox(
                             label="Input Text (Khmer, English, or Mixed)",
                             placeholder="Enter text to synthesize here...",
@@ -272,7 +273,7 @@ def create_tts_tab():
                             cancel_btn = gr.Button("🛑 Cancel Generation", variant="stop")
                         refresh_profiles_btn = gr.Button("🔄 Refresh Profile List", variant="secondary")
 
-                    with gr.Column(scale=2):
+                    with gr.Column(scale=2, elem_classes=["cu-card"]):
                         job_status = gr.Label(label="Execution Status", value="Ready to generate.")
                         audio_player = gr.Audio(label="Generated Audio Output (48kHz WAV)", type="filepath")
                         telemetry_display = gr.Markdown(value="Telemetry metrics will appear here after generation.")
@@ -281,14 +282,15 @@ def create_tts_tab():
             # SUB-TAB 2: Long-Form Studio (Stage 4)
             # ---------------------------------------------------------
             with gr.TabItem("📖 Long-Form Studio (Articles & Audiobooks)"):
-                gr.Markdown(
-                    "Synthesize long articles, chapters, and scripts without audio collapse. "
-                    "Text is partitioned into intelligent sentence chunks, synthesized with persistent checkpoints, "
-                    "and seamlessly stitched with inter-sentence pauses into studio WAV and 320k MP3."
-                )
+                with gr.Column(elem_classes=["cu-card"]):
+                    gr.Markdown(
+                        "Synthesize long articles, chapters, and scripts without audio collapse. "
+                        "Text is partitioned into intelligent sentence chunks, synthesized with persistent checkpoints, "
+                        "and seamlessly stitched with inter-sentence pauses into studio WAV and 320k MP3."
+                    )
 
                 with gr.Row():
-                    with gr.Column(scale=2):
+                    with gr.Column(scale=2, elem_classes=["cu-card"]):
                         lf_title = gr.Textbox(
                             label="Project / Chapter Title",
                             placeholder="e.g. Chapter 1: Introduction to VoiceStudio",
@@ -320,7 +322,7 @@ def create_tts_tab():
                         with gr.Row():
                             lf_start_btn = gr.Button("🎙️ Start Long-Form Synthesis (CPU Queue)", variant="primary")
 
-                    with gr.Column(scale=2):
+                    with gr.Column(scale=2, elem_classes=["cu-card"]):
                         lf_status = gr.Label(label="Long-Form Status", value="Ready to synthesize.")
                         lf_master_wav = gr.Audio(label="Full Stitched Master Audio (48kHz Studio WAV)", type="filepath")
                         with gr.Row():

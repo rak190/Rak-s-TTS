@@ -14,16 +14,23 @@ def inspect_uploaded_audio(file_path: str):
     if not meta.is_valid:
         return f"❌ Invalid audio: {meta.error_message}", 0.0, 0.0, None
 
+    peak_str = f"`{meta.peak_dbfs} dBFS`" if meta.peak_dbfs is not None else "`N/A`"
+    rms_str = f"`{meta.rms_dbfs} dBFS`" if meta.rms_dbfs is not None else "`N/A`"
+
     info_md = f"""
 ### Audio Inspection:
 * **Duration:** `{meta.duration_sec}s` ({round(meta.duration_sec/60, 2)} min)
 * **Sample Rate:** `{meta.sample_rate} Hz`
 * **Channels:** `{meta.channels} ({'Mono' if meta.channels == 1 else 'Stereo'})`
 * **Format:** `{meta.subtype}`
+* **Peak Level:** {peak_str}
+* **RMS Energy:** {rms_str}
 * **File Size:** `{round(meta.file_size_bytes / (1024**2), 2)} MB`
+
+*💡 Note: You can use the entire recording, or select a clean 10–25s "golden slice" below.*
 """
-    # Recommend a default slice if audio is longer than 20s
-    default_end = min(20.0, meta.duration_sec) if meta.duration_sec > 1.0 else meta.duration_sec
+    # Keep full duration as default; trimming remains optional and user-guided
+    default_end = meta.duration_sec
     return info_md, 0.0, default_end, file_path
 
 def preview_trimmed_segment(file_path: str, start_sec: float, end_sec: float):

@@ -25,6 +25,11 @@ class TextProcessor:
         return bool(cls.KHMER_CHAR_REGEX.search(text))
 
     @classmethod
+    def is_khmer(cls, text: str) -> bool:
+        """Convenience alias for contains_khmer."""
+        return cls.contains_khmer(text)
+
+    @classmethod
     def detect_language(cls, text: str) -> str:
         """Heuristic language detection: 'khmer', 'english', or 'mixed'."""
         has_khmer = cls.contains_khmer(text)

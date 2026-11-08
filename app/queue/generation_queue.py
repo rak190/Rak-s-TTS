@@ -5,7 +5,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 from app.database.connection import DatabaseManager
 from app.database.models import QueueJob
@@ -32,6 +32,8 @@ class GenerationTask:
     on_error: Optional[Callable[[str], None]] = None
     executor: Optional[Callable[["GenerationTask"], Dict]] = None
     cancel_event: threading.Event = field(default_factory=threading.Event)
+    result: Optional[Dict] = None
+    error: Optional[str] = None
 
 class GenerationQueue:
     """
@@ -84,30 +86,93 @@ class GenerationQueue:
 
     def cancel_job(self, job_id: str) -> bool:
         """Requests cancellation of a pending or active job."""
-        if self._current_task and self._current_task.job_id == job_id:
-            self._current_task.cancel_event.set()
+        with self._lock:
+            if self._current_task and self._current_task.job_id == job_id:
+                self._current_task.cancel_event.set()
+                job = self._jobs_registry.get(job_id)
+                if job:
+                    job.status = "cancelled"
+                    job.status_message = "Generation cancelled by user (halting at chunk boundary)"
+                    job.completed_at = utc_iso_now()
+                    self.db.update_job(job)
+                logger.info(f"Cancellation requested for active job {job_id}")
+                return True
+
             job = self._jobs_registry.get(job_id)
-            if job:
+            if job and job.status == "pending":
+                for t in list(self._task_queue.queue):
+                    if t.job_id == job_id:
+                        t.cancel_event.set()
+                        break
                 job.status = "cancelled"
-                job.status_message = "Generation cancelled by user"
+                job.status_message = "Cancelled while waiting in queue"
                 job.completed_at = utc_iso_now()
                 self.db.update_job(job)
-            return True
-
-        job = self._jobs_registry.get(job_id)
-        if job and job.status == "pending":
-            job.status = "cancelled"
-            job.status_message = "Cancelled while in queue"
-            job.completed_at = utc_iso_now()
-            self.db.update_job(job)
-            return True
+                logger.info(f"Pending job {job_id} cancelled")
+                return True
         return False
+
+    def get_job_position(self, job_id: str) -> Optional[Tuple[int, int]]:
+        """Returns (1-based position, total_pending) if job is in pending queue, else None."""
+        with self._lock:
+            pending_ids = [t.job_id for t in list(self._task_queue.queue)]
+            if job_id in pending_ids:
+                return pending_ids.index(job_id) + 1, len(pending_ids)
+        return None
 
     def get_job_status(self, job_id: str) -> Optional[QueueJob]:
         """Returns the current state of a registered job."""
         if job_id in self._jobs_registry:
             return self._jobs_registry[job_id]
         return self.db.get_job(job_id)
+
+    def get_job_display_status(self, job_id: str) -> Dict[str, Any]:
+        """Returns structured display status with formatted badge and elapsed time."""
+        job = self.get_job_status(job_id)
+        if not job:
+            return {
+                "status": "unknown",
+                "badge": "⚪ Unknown",
+                "message": "Job not found",
+                "elapsed_sec": 0.0,
+                "progress": 0.0,
+                "result": None
+            }
+
+        elapsed_sec = 0.0
+        if job.started_at:
+            try:
+                start_dt = datetime.fromisoformat(job.started_at)
+                end_dt = datetime.fromisoformat(job.completed_at) if job.completed_at else datetime.now(timezone.utc)
+                elapsed_sec = round((end_dt - start_dt).total_seconds(), 1)
+            except Exception:
+                pass
+
+        pos = self.get_job_position(job_id)
+        if job.status == "pending":
+            pos_str = f" (Position {pos[0]} of {pos[1]})" if pos else ""
+            badge = f"⏳ Pending{pos_str}"
+        elif job.status == "processing":
+            badge = f"⚙️ Processing ({int(elapsed_sec)}s elapsed)"
+        elif job.status == "completed":
+            badge = f"✅ Completed ({elapsed_sec}s)"
+        elif job.status == "failed":
+            badge = "❌ Failed"
+        elif job.status == "cancelled":
+            badge = "🚫 Cancelled"
+        else:
+            badge = f"ℹ️ {job.status.capitalize()}"
+
+        return {
+            "status": job.status,
+            "badge": badge,
+            "message": job.status_message,
+            "elapsed_sec": elapsed_sec,
+            "progress": job.progress,
+            "generation_id": job.generation_id,
+            "error_message": job.error_message,
+            "result": getattr(job, "_result", None)
+        }
 
     def get_queue_stats(self) -> Dict:
         """Returns live statistics of queue activity."""
@@ -160,6 +225,8 @@ class GenerationQueue:
                     job.status = "cancelled"
                     job.status_message = "Inference cancelled"
                 else:
+                    task.result = result
+                    job._result = result
                     job.status = "completed"
                     job.progress = 1.0
                     job.status_message = f"Completed in {result.get('generation_time_sec', 0)}s"
@@ -168,6 +235,7 @@ class GenerationQueue:
                         task.on_complete(result)
 
             except Exception as e:
+                task.error = str(e)
                 if task.cancel_event.is_set() or job.status == "cancelled":
                     job.status = "cancelled"
                     job.status_message = "Inference cancelled"

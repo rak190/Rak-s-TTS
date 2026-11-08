@@ -17,6 +17,8 @@ class AudioMetadata:
     channels: int
     subtype: str
     file_size_bytes: int
+    peak_dbfs: Optional[float] = None
+    rms_dbfs: Optional[float] = None
     is_valid: bool = True
     error_message: str = ""
 
@@ -56,6 +58,19 @@ class AudioProcessor:
 
         try:
             info = sf.info(str(p))
+            peak_dbfs = None
+            rms_dbfs = None
+            if file_size < 50 * 1024 * 1024:
+                try:
+                    audio_data, _ = sf.read(str(p), dtype="float32")
+                    if audio_data.size > 0:
+                        peak = float(np.max(np.abs(audio_data)))
+                        rms = float(np.sqrt(np.mean(audio_data**2)))
+                        peak_dbfs = round(20 * np.log10(max(peak, 1e-6)), 1)
+                        rms_dbfs = round(20 * np.log10(max(rms, 1e-6)), 1)
+                except Exception:
+                    pass
+
             return AudioMetadata(
                 file_path=str(p),
                 duration_sec=round(info.duration, 2),
@@ -63,6 +78,8 @@ class AudioProcessor:
                 channels=info.channels,
                 subtype=info.subtype,
                 file_size_bytes=file_size,
+                peak_dbfs=peak_dbfs,
+                rms_dbfs=rms_dbfs,
                 is_valid=True
             )
         except Exception as e:

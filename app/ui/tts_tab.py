@@ -1,4 +1,5 @@
 """Text-to-Speech Studio UI tab."""
+import time
 import uuid
 import gradio as gr
 from typing import List, Tuple
@@ -26,6 +27,15 @@ def on_text_changed(text: str):
         return "Detected Language: 🌐 Mixed (Khmer + English Code-Switching)"
     return f"Detected Language: {lang.capitalize()}"
 
+def cancel_current_generation():
+    queue = GenerationQueue.get_instance()
+    stats = queue.get_queue_stats()
+    curr_id = stats.get("current_job_id")
+    if curr_id:
+        queue.cancel_job(curr_id)
+        return "🛑 Cancellation requested for active job."
+    return "ℹ️ No active job running."
+
 def run_tts_generation(
     text: str,
     mode: str,
@@ -34,7 +44,8 @@ def run_tts_generation(
     timesteps: int
 ):
     if not text or not text.strip():
-        return None, "Error: Target text cannot be empty.", "No telemetry available."
+        yield None, "Error: Target text cannot be empty.", "No telemetry available."
+        return
 
     norm_text = TextProcessor.normalize_text(text)
     lang = TextProcessor.detect_language(norm_text)
@@ -59,17 +70,19 @@ def run_tts_generation(
     job_type = "tts"
     if mode == "Voice Cloning":
         if not ref_audio_path:
-            return None, "Error: Voice Cloning requires selecting a Voice Profile with reference audio.", "No telemetry available."
+            yield None, "Error: Voice Cloning requires selecting a Voice Profile with reference audio.", "No telemetry available."
+            return
         job_type = "cloning"
     elif mode == "Ultimate Cloning":
         if not ref_audio_path:
-            return None, "Error: Ultimate Cloning requires a Voice Profile with reference audio.", "No telemetry available."
+            yield None, "Error: Ultimate Cloning requires a Voice Profile with reference audio.", "No telemetry available."
+            return
         if not prompt_text or not prompt_text.strip():
-            return None, "Error: Ultimate Cloning strictly requires an exact verbatim transcript for the reference segment. Please edit the profile transcript in Voice Library.", "No telemetry available."
+            yield None, "Error: Ultimate Cloning strictly requires an exact verbatim transcript for the reference segment. Please edit the profile transcript in Voice Library.", "No telemetry available."
+            return
         job_type = "ultimate_cloning"
 
-    # Synchronous queue execution for interactive Gradio request
-    # Note: The underlying worker ensures strict single-inference lock
+    # Single-inference FIFO queue submission
     job_id = f"job_{uuid.uuid4().hex[:10]}"
     task = GenerationTask(
         job_id=job_id,
@@ -85,23 +98,47 @@ def run_tts_generation(
         inference_timesteps=int(timesteps)
     )
 
-    try:
-        gen_service = GenerationService.get_instance()
-        result = gen_service.execute_generation_task(task)
-        
-        telemetry_md = f"""
-### 📊 Generation Telemetry:
-* **Audio Duration:** `{result['duration_sec']}s`
-* **Generation Time:** `{result['generation_time_sec']}s`
-* **Real-Time Factor (RTF):** `{result['rtf']}x`
-* **Sample Rate:** `{result['sample_rate']} Hz (Studio Quality)`
-* **Output Path:** `{result['output_path']}`
-"""
-        status_msg = f"✅ Speech generation complete! ({result['duration_sec']}s audio generated in {result['generation_time_sec']}s)"
-        return result['output_path'], status_msg, telemetry_md
+    queue = GenerationQueue.get_instance()
+    queue.submit_task(task)
 
-    except Exception as e:
-        return None, f"❌ Generation failed: {e}", f"Error: {e}"
+    # Stream real-time status updates via Gradio generator
+    while True:
+        status_info = queue.get_job_display_status(job_id)
+        st = status_info["status"]
+        badge = status_info["badge"]
+        msg = status_info["message"]
+
+        if st == "pending":
+            yield None, badge, f"⏳ {msg}..."
+            time.sleep(0.5)
+        elif st == "processing":
+            yield None, badge, f"⚙️ {msg} (Synthesizing on CPU...)"
+            time.sleep(0.5)
+        elif st == "completed":
+            res = status_info.get("result") or task.result
+            if res:
+                telemetry_md = f"""
+### 📊 Generation Telemetry:
+* **Audio Duration:** `{res['duration_sec']}s`
+* **Generation Time:** `{res['generation_time_sec']}s`
+* **Real-Time Factor (RTF):** `{res['rtf']}x`
+* **Sample Rate:** `{res['sample_rate']} Hz (Studio Quality)`
+* **Output Path:** `{res['output_path']}`
+"""
+                status_msg = f"✅ Speech generation complete! ({res['duration_sec']}s audio generated in {res['generation_time_sec']}s)"
+                yield res['output_path'], status_msg, telemetry_md
+            else:
+                yield None, "✅ Completed", "Audio synthesized successfully."
+            break
+        elif st == "failed":
+            err = status_info.get("error_message") or task.error or "Unknown synthesis error"
+            yield None, "❌ Failed", f"### ❌ Generation Failed\n\n`{err}`"
+            break
+        elif st == "cancelled":
+            yield None, "🚫 Cancelled", "Generation was cancelled."
+            break
+        else:
+            time.sleep(0.5)
 
 def create_tts_tab():
     with gr.Tab("🔊 Text-to-Speech Studio", id="tab_tts"):
@@ -134,7 +171,9 @@ def create_tts_tab():
                         cfg_slider = gr.Slider(minimum=1.0, maximum=5.0, value=2.0, step=0.1, label="CFG Guidance Scale")
                         steps_slider = gr.Slider(minimum=5, maximum=30, value=10, step=1, label="Inference Timesteps (Diffusion)")
 
-                gen_btn = gr.Button("🎙️ Generate Speech (Offline CPU Queue)", variant="primary")
+                with gr.Row():
+                    gen_btn = gr.Button("🎙️ Generate Speech (Offline CPU Queue)", variant="primary")
+                    cancel_btn = gr.Button("🛑 Cancel Generation", variant="stop")
                 refresh_profiles_btn = gr.Button("🔄 Refresh Profile List", variant="secondary")
 
             with gr.Column(scale=2):
@@ -145,6 +184,7 @@ def create_tts_tab():
         # Events
         text_input.change(fn=on_text_changed, inputs=[text_input], outputs=[lang_badge])
         refresh_profiles_btn.click(fn=lambda: gr.update(choices=get_available_profiles()), outputs=[profile_dropdown])
+        cancel_btn.click(fn=cancel_current_generation, outputs=[job_status])
         
         gen_btn.click(
             fn=run_tts_generation,

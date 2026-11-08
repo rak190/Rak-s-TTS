@@ -1,5 +1,6 @@
 """Automated unit tests for asynchronous generation queue."""
 import time
+import threading
 import tempfile
 import unittest
 from pathlib import Path
@@ -64,6 +65,52 @@ class TestGenerationQueue(unittest.TestCase):
         stats = self.queue.get_queue_stats()
         self.assertIn("queue_depth", stats)
         self.assertIn("is_processing", stats)
+
+    def test_queue_position_and_display_badges(self):
+        # Block worker with a running task
+        block_event = threading.Event()
+        running_task = GenerationTask(
+            job_id="test_running",
+            job_type="tts",
+            target_text="running",
+            executor=lambda t: (block_event.wait(timeout=2.0), {"generation_time_sec": 0.1})[1]
+        )
+        self.queue.submit_task(running_task)
+        time.sleep(0.05) # ensure running
+
+        # Submit two pending tasks
+        task_p1 = GenerationTask(job_id="test_p1", job_type="tts", target_text="p1")
+        task_p2 = GenerationTask(job_id="test_p2", job_type="tts", target_text="p2")
+        self.queue.submit_task(task_p1)
+        self.queue.submit_task(task_p2)
+
+        # Check positions
+        pos1 = self.queue.get_job_position("test_p1")
+        pos2 = self.queue.get_job_position("test_p2")
+        self.assertIsNotNone(pos1)
+        self.assertIsNotNone(pos2)
+        self.assertEqual(pos1[0], 1) # 1st in pending queue
+        self.assertEqual(pos2[0], 2) # 2nd in pending queue
+        self.assertEqual(pos1[1], 2) # 2 total pending
+
+        # Check display badges
+        disp_running = self.queue.get_job_display_status("test_running")
+        disp_p1 = self.queue.get_job_display_status("test_p1")
+        self.assertEqual(disp_running["status"], "processing")
+        self.assertIn("⚙️ Processing", disp_running["badge"])
+        self.assertEqual(disp_p1["status"], "pending")
+        self.assertIn("Position 1 of 2", disp_p1["badge"])
+
+        # Test pending job cancellation
+        cancelled = self.queue.cancel_job("test_p2")
+        self.assertTrue(cancelled)
+        disp_p2 = self.queue.get_job_display_status("test_p2")
+        self.assertEqual(disp_p2["status"], "cancelled")
+        self.assertIn("🚫 Cancelled", disp_p2["badge"])
+
+        # Unblock worker
+        block_event.set()
+        time.sleep(0.2)
 
 if __name__ == "__main__":
     unittest.main()

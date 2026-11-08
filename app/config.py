@@ -12,6 +12,7 @@ if sys.platform == "win32":
         pass
 os.environ["PYTHONIOENCODING"] = "utf-8"
 os.environ["PYTHONUTF8"] = "1"
+os.environ["GRADIO_ANALYTICS_ENABLED"] = "False"
 
 # Base Directory (Drive D:)
 BASE_DIR = Path(__file__).resolve().parent.parent

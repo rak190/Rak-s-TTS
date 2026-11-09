@@ -1,16 +1,13 @@
 # ==============================================================================
-# VoiceStudio AI - Local Desktop Launcher (PowerShell)
+# VoiceStudio Pro - Local Desktop Launcher (PowerShell)
 # ==============================================================================
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-$Host.UI.RawUI.WindowTitle = "VoiceStudio AI - Studio Edition"
-
-Write-Host "==============================================================================" -ForegroundColor Cyan
-Write-Host "  VoiceStudio AI - Multilingual Speech and Voice Cloning Studio" -ForegroundColor Cyan
-Write-Host "  Engine: OpenBMB VoxCPM2 | Device: Intel Core i5 CPU | Host: 127.0.0.1:7860" -ForegroundColor Cyan
-Write-Host "==============================================================================" -ForegroundColor Cyan
-Write-Host ""
+$Host.UI.RawUI.WindowTitle = "VoiceStudio Pro — Apple Creative Workspace"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if (-not $ScriptDir) {
+    $ScriptDir = "D:\Coding\Rak'sTTS"
+}
 Set-Location $ScriptDir
 
 $env:PYTHONIOENCODING = "utf-8"
@@ -26,12 +23,38 @@ if (-not (Test-Path $PythonExe)) {
     exit 1
 }
 
+# Check for CLI flags
+if ($args -contains "--silent") {
+    $SilentVbs = Join-Path $ScriptDir "run_silent.vbs"
+    if (Test-Path $SilentVbs) {
+        Start-Process "wscript.exe" -ArgumentList "`"$SilentVbs`""
+        Write-Host "✅ VoiceStudio Pro launched in background." -ForegroundColor Green
+        exit 0
+    }
+}
+
+if ($args -contains "--shortcut") {
+    $ShortcutScript = Join-Path $ScriptDir "create_desktop_shortcut.ps1"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $ShortcutScript
+    exit 0
+}
+
+Write-Host "  ╭────────────────────────────────────────────────────────────────────────╮" -ForegroundColor Magenta
+Write-Host "  │   🎙️  VOICESTUDIO PRO   •   Apple Creative Workspace & Multi-Speaker TTS     │" -ForegroundColor Cyan
+Write-Host "  │   Engine: OpenBMB VoxCPM2  │  Native Audio: 48kHz  │  Intel Core i5 CPU    │" -ForegroundColor DarkGray
+Write-Host "  ╰────────────────────────────────────────────────────────────────────────╯" -ForegroundColor Magenta
+Write-Host ""
+Write-Host "🚀 Launching VoiceStudio Pro..." -ForegroundColor Green
+Write-Host "Local Studio: http://127.0.0.1:7860" -ForegroundColor White
+Write-Host "Press Ctrl+C in this console to stop the server at any time." -ForegroundColor DarkGray
+Write-Host ""
+
 & $PythonExe -m app.main $args
 $ExitCode = $LASTEXITCODE
 
 if ($ExitCode -ne 0) {
     Write-Host ""
-    Write-Host "[NOTICE] Application exited with status code $ExitCode" -ForegroundColor Yellow
+    Write-Host "[NOTICE] VoiceStudio Pro closed with status code $ExitCode" -ForegroundColor Yellow
     Read-Host "Press Enter to exit"
 }
 

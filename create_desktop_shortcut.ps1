@@ -1,36 +1,72 @@
 # ==============================================================================
-# VoiceStudio AI - Windows Desktop Shortcut Creator
-# Creates a personalized, high-resolution desktop shortcut with custom icon
+# VoiceStudio Pro - Windows Desktop & Start Menu Shortcut Creator
+# Creates personalized, high-resolution shortcuts with custom studio icon
 # ==============================================================================
 
 $WshShell = New-Object -ComObject WScript.Shell
+$ProjectDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+if (-not $ProjectDir) {
+    $ProjectDir = "D:\Coding\Rak'sTTS"
+}
+
+# 1. Resolve Target Executable / Batch Runner
+$TargetBat = Join-Path $ProjectDir "run.bat"
+if (-not (Test-Path $TargetBat)) {
+    $TargetBat = Join-Path $ProjectDir "run_voicestudio.bat"
+}
+
+# 2. Resolve High-Res Studio Icon
+$IconPath = Join-Path $ProjectDir "assets\voicestudio.ico"
+if (-not (Test-Path $IconPath)) {
+    $IconPath = Join-Path $ProjectDir "voicestudio.ico"
+}
+
+Write-Host "==============================================================================" -ForegroundColor Magenta
+Write-Host "  VoiceStudio Pro - Shortcut Installer" -ForegroundColor Cyan
+Write-Host "==============================================================================" -ForegroundColor Magenta
+
+# 3. Create Desktop Shortcut
 $DesktopPath = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Desktop)
 if (-not $DesktopPath -or -not (Test-Path $DesktopPath)) {
-    $DesktopPath = "C:\Users\Admin\Desktop"
+    $DesktopPath = Join-Path $env:USERPROFILE "Desktop"
 }
+$DesktopShortcutPath = Join-Path $DesktopPath "VoiceStudio Pro.lnk"
 
-$ProjectDir = "D:\Coding\Rak'sTTS"
-$ShortcutPath = Join-Path $DesktopPath "VoiceStudio AI.lnk"
-$TargetBat = Join-Path $ProjectDir "run_voicestudio.bat"
-$IconPath = Join-Path $ProjectDir "assets\voicestudio.ico"
-
-Write-Host "Creating Windows Desktop Shortcut for VoiceStudio AI..." -ForegroundColor Cyan
-
-if (-not (Test-Path $TargetBat)) {
-    Write-Error "Launcher batch file not found at: $TargetBat"
-    exit 1
-}
-
-$Shortcut = $WshShell.CreateShortcut($ShortcutPath)
-$Shortcut.TargetPath = $TargetBat
-$Shortcut.WorkingDirectory = $ProjectDir
+$DesktopShortcut = $WshShell.CreateShortcut($DesktopShortcutPath)
+$DesktopShortcut.TargetPath = $TargetBat
+$DesktopShortcut.WorkingDirectory = $ProjectDir
 if (Test-Path $IconPath) {
-    $Shortcut.IconLocation = "$IconPath, 0"
+    $DesktopShortcut.IconLocation = "$IconPath, 0"
 }
-$Shortcut.Description = "VoiceStudio AI - Multilingual Speech and Voice Cloning Studio"
-$Shortcut.WindowStyle = 1
-$Shortcut.Save()
+$DesktopShortcut.Description = "VoiceStudio Pro - Apple Creative Workspace and Multi-Speaker TTS"
+$DesktopShortcut.WindowStyle = 1
+$DesktopShortcut.Save()
 
-Write-Host "SUCCESS: Desktop shortcut created successfully!" -ForegroundColor Green
-Write-Host "Location: $ShortcutPath" -ForegroundColor White
-Write-Host "You can now double-click 'VoiceStudio AI' on your Desktop to launch the studio." -ForegroundColor Yellow
+Write-Host "  [OK] Desktop Shortcut Created:" -ForegroundColor Green
+Write-Host "       $DesktopShortcutPath" -ForegroundColor White
+
+# 4. Create Start Menu Shortcut
+$StartMenuPrograms = [System.Environment]::GetFolderPath([System.Environment+SpecialFolder]::Programs)
+if (-not $StartMenuPrograms -or -not (Test-Path $StartMenuPrograms)) {
+    $StartMenuPrograms = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
+}
+
+if (Test-Path $StartMenuPrograms) {
+    $StartMenuShortcutPath = Join-Path $StartMenuPrograms "VoiceStudio Pro.lnk"
+    $StartMenuShortcut = $WshShell.CreateShortcut($StartMenuShortcutPath)
+    $StartMenuShortcut.TargetPath = $TargetBat
+    $StartMenuShortcut.WorkingDirectory = $ProjectDir
+    if (Test-Path $IconPath) {
+        $StartMenuShortcut.IconLocation = "$IconPath, 0"
+    }
+    $StartMenuShortcut.Description = "VoiceStudio Pro - Apple Creative Workspace and Multi-Speaker TTS"
+    $StartMenuShortcut.WindowStyle = 1
+    $StartMenuShortcut.Save()
+
+    Write-Host "  [OK] Start Menu Shortcut Created:" -ForegroundColor Green
+    Write-Host "       $StartMenuShortcutPath" -ForegroundColor White
+}
+
+Write-Host ""
+Write-Host "VoiceStudio Pro is now accessible from your Desktop and Start Menu!" -ForegroundColor Cyan
+Write-Host "Double-click 'VoiceStudio Pro' to start the studio with 1-click." -ForegroundColor Gray

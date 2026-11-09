@@ -40,6 +40,8 @@ storage/backups/*
 # SQLite Database
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.sqlite3
 *.zip
 

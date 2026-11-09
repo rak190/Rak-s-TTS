@@ -78,14 +78,22 @@ class DatabaseManager:
                 INSERT INTO voice_profiles (
                     id, name, description, language, original_audio_path,
                     reference_segment_path, transcript, duration_sec, sample_rate,
-                    created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    created_at, updated_at, display_name, khmer_display_name,
+                    category, gender, speaking_style, origin, source_license,
+                    preview_audio_path, preview_type, is_favorite, is_default,
+                    last_used_at, validation_status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     profile.id, profile.name, profile.description, profile.language,
                     profile.original_audio_path, profile.reference_segment_path,
                     profile.transcript, profile.duration_sec, profile.sample_rate,
-                    profile.created_at, profile.updated_at
+                    profile.created_at, profile.updated_at, profile.display_name,
+                    profile.khmer_display_name, profile.category, profile.gender,
+                    profile.speaking_style, profile.origin, profile.source_license,
+                    profile.preview_audio_path, profile.preview_type,
+                    profile.is_favorite, profile.is_default, profile.last_used_at,
+                    profile.validation_status
                 )
             )
             return profile
@@ -111,7 +119,7 @@ class DatabaseManager:
     def list_voice_profiles(self) -> List[VoiceProfile]:
         with self.get_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM voice_profiles ORDER BY created_at DESC")
+            cursor.execute("SELECT * FROM voice_profiles ORDER BY is_default DESC, is_favorite DESC, created_at DESC")
             return [VoiceProfile(**dict(row)) for row in cursor.fetchall()]
 
     def update_voice_profile(self, profile: VoiceProfile) -> bool:
@@ -123,17 +131,121 @@ class DatabaseManager:
                     name = ?, description = ?, language = ?,
                     original_audio_path = ?, reference_segment_path = ?,
                     transcript = ?, duration_sec = ?, sample_rate = ?,
-                    updated_at = ?
+                    updated_at = ?, display_name = ?, khmer_display_name = ?,
+                    category = ?, gender = ?, speaking_style = ?, origin = ?,
+                    source_license = ?, preview_audio_path = ?, preview_type = ?,
+                    is_favorite = ?, is_default = ?, last_used_at = ?,
+                    validation_status = ?
                 WHERE id = ?
                 """,
                 (
                     profile.name, profile.description, profile.language,
                     profile.original_audio_path, profile.reference_segment_path,
                     profile.transcript, profile.duration_sec, profile.sample_rate,
-                    profile.updated_at, profile.id
+                    profile.updated_at, profile.display_name, profile.khmer_display_name,
+                    profile.category, profile.gender, profile.speaking_style, profile.origin,
+                    profile.source_license, profile.preview_audio_path, profile.preview_type,
+                    profile.is_favorite, profile.is_default, profile.last_used_at,
+                    profile.validation_status, profile.id
                 )
             )
             return cursor.rowcount > 0
+
+    def set_voice_favorite(self, profile_id: str, is_favorite: bool) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE voice_profiles SET is_favorite = ?, updated_at = ? WHERE id = ?",
+                (1 if is_favorite else 0, utc_iso_now(), profile_id)
+            )
+            return cursor.rowcount > 0
+
+    def set_voice_default(self, profile_id: str) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE voice_profiles SET is_default = 0")
+            cursor.execute(
+                "UPDATE voice_profiles SET is_default = 1, updated_at = ? WHERE id = ?",
+                (utc_iso_now(), profile_id)
+            )
+            cursor.execute(
+                "INSERT INTO settings (key, value, updated_at) VALUES ('active_voice_id', ?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+                (profile_id, utc_iso_now())
+            )
+            return cursor.rowcount > 0
+
+    def get_default_voice_profile(self) -> Optional[VoiceProfile]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            # Try setting first
+            cursor.execute("SELECT value FROM settings WHERE key = 'active_voice_id'")
+            row = cursor.fetchone()
+            if row and row[0]:
+                cursor.execute("SELECT * FROM voice_profiles WHERE id = ?", (row[0],))
+                prof_row = cursor.fetchone()
+                if prof_row:
+                    return VoiceProfile(**dict(prof_row))
+
+            cursor.execute("SELECT * FROM voice_profiles WHERE is_default = 1 LIMIT 1")
+            row = cursor.fetchone()
+            if row:
+                return VoiceProfile(**dict(row))
+
+            cursor.execute("SELECT * FROM voice_profiles ORDER BY is_favorite DESC, created_at ASC LIMIT 1")
+            row = cursor.fetchone()
+            return VoiceProfile(**dict(row)) if row else None
+
+    def record_voice_used(self, profile_id: str) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE voice_profiles SET last_used_at = ? WHERE id = ?",
+                (utc_iso_now(), profile_id)
+            )
+            return cursor.rowcount > 0
+
+    def search_voice_catalog(
+        self,
+        search_term: str = "",
+        category: Optional[str] = None,
+        gender: Optional[str] = None,
+        origin: Optional[str] = None,
+        favorites_only: bool = False,
+        validation_status: Optional[str] = None
+    ) -> List[VoiceProfile]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            query = "SELECT * FROM voice_profiles WHERE 1=1"
+            params: List[Any] = []
+
+            if search_term:
+                term = f"%{search_term.strip()}%"
+                query += " AND (name LIKE ? OR display_name LIKE ? OR khmer_display_name LIKE ? OR description LIKE ? OR speaking_style LIKE ?)"
+                params.extend([term, term, term, term, term])
+
+            if category and category.lower() != "all":
+                query += " AND LOWER(category) = LOWER(?)"
+                params.append(category)
+
+            if gender and gender.lower() != "all":
+                query += " AND LOWER(gender) = LOWER(?)"
+                params.append(gender)
+
+            if origin and origin.lower() != "all":
+                query += " AND LOWER(origin) = LOWER(?)"
+                params.append(origin)
+
+            if favorites_only:
+                query += " AND is_favorite = 1"
+
+            if validation_status and validation_status.lower() != "all":
+                query += " AND LOWER(validation_status) = LOWER(?)"
+                params.append(validation_status)
+
+            query += " ORDER BY is_default DESC, is_favorite DESC, created_at DESC"
+            cursor.execute(query, tuple(params))
+            return [VoiceProfile(**dict(row)) for row in cursor.fetchall()]
 
     def delete_voice_profile(self, profile_id: str) -> bool:
         with self.get_connection() as conn:

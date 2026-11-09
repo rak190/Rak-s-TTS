@@ -2,7 +2,7 @@
 import sqlite3
 from datetime import datetime, timezone
 
-CURRENT_SCHEMA_VERSION = 4
+CURRENT_SCHEMA_VERSION = 5
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS schema_version (
@@ -21,7 +21,20 @@ CREATE TABLE IF NOT EXISTS voice_profiles (
     duration_sec REAL DEFAULT 0.0,
     sample_rate INTEGER DEFAULT 48000,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    display_name TEXT DEFAULT '',
+    khmer_display_name TEXT DEFAULT '',
+    category TEXT DEFAULT 'general',
+    gender TEXT DEFAULT 'unspecified',
+    speaking_style TEXT DEFAULT 'Natural',
+    origin TEXT DEFAULT 'user_created',
+    source_license TEXT DEFAULT 'Local User Audio',
+    preview_audio_path TEXT DEFAULT '',
+    preview_type TEXT DEFAULT 'reference',
+    is_favorite INTEGER DEFAULT 0,
+    is_default INTEGER DEFAULT 0,
+    last_used_at TEXT,
+    validation_status TEXT DEFAULT 'verified'
 );
 
 CREATE TABLE IF NOT EXISTS generations (
@@ -191,6 +204,31 @@ def migrate_v3_to_v4(cursor: sqlite3.Cursor):
             cursor.execute(f"ALTER TABLE jobs ADD COLUMN {col_name} {col_type}")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_jobs_priority_created ON jobs(status, priority DESC, created_at ASC)")
 
+def migrate_v4_to_v5(cursor: sqlite3.Cursor):
+    """Safely adds rich catalog and instant preview columns to voice_profiles table."""
+    cursor.execute("PRAGMA table_info(voice_profiles)")
+    existing_cols = {row[1] for row in cursor.fetchall()}
+    columns_to_add = [
+        ("display_name", "TEXT DEFAULT ''"),
+        ("khmer_display_name", "TEXT DEFAULT ''"),
+        ("category", "TEXT DEFAULT 'general'"),
+        ("gender", "TEXT DEFAULT 'unspecified'"),
+        ("speaking_style", "TEXT DEFAULT 'Natural'"),
+        ("origin", "TEXT DEFAULT 'user_created'"),
+        ("source_license", "TEXT DEFAULT 'Local User Audio'"),
+        ("preview_audio_path", "TEXT DEFAULT ''"),
+        ("preview_type", "TEXT DEFAULT 'reference'"),
+        ("is_favorite", "INTEGER DEFAULT 0"),
+        ("is_default", "INTEGER DEFAULT 0"),
+        ("last_used_at", "TEXT"),
+        ("validation_status", "TEXT DEFAULT 'verified'")
+    ]
+    for col_name, col_type in columns_to_add:
+        if col_name not in existing_cols:
+            cursor.execute(f"ALTER TABLE voice_profiles ADD COLUMN {col_name} {col_type}")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_voice_profiles_fav_cat ON voice_profiles(is_favorite, is_default, category)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_voice_profiles_status ON voice_profiles(validation_status)")
+
 def initialize_database(conn: sqlite3.Connection):
     """Initializes tables and records schema version safely without destructive drops."""
     cursor = conn.cursor()
@@ -208,6 +246,9 @@ def initialize_database(conn: sqlite3.Connection):
     
     if current_ver < 4:
         migrate_v3_to_v4(cursor)
+
+    if current_ver < 5:
+        migrate_v4_to_v5(cursor)
 
     if current_ver < CURRENT_SCHEMA_VERSION:
         cursor.execute(

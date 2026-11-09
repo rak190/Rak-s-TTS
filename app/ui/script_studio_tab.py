@@ -31,9 +31,14 @@ SAMPLE_DOCX_FIXTURE = BASE_DIR / "tests" / "fixtures" / "ICT_Grade8_AI_Animation
 
 def get_voice_choices() -> List[str]:
     profiles = VoiceProfileService.get_instance().list_profiles()
+    verified = [p for p in profiles if p.validation_status == "verified"]
     choices = ["Default Voice (No Profile)"]
-    for p in profiles:
-        choices.append(f"{p.name} ({p.id})")
+    for p in verified:
+        star = "⭐ " if p.is_favorite else ""
+        trophy = "🏆 " if p.is_default else ""
+        label = p.display_name or p.name
+        cat = f" — {p.category.capitalize()}" if p.category else ""
+        choices.append(f"{trophy}{star}{label}{cat} ({p.id})")
     return choices
 
 
@@ -264,7 +269,13 @@ def build_scene_ui_state(
     seg_text = seg.text if seg else ""
     seg_role = seg.speaker_role if seg else "Teacher"
     voice_choices = get_voice_choices()
+    default_p = VoiceProfileService.get_instance().get_default_profile()
     seg_voice_val = "Default Voice (No Profile)"
+    if default_p:
+        for vc in voice_choices:
+            if f"({default_p.id})" in vc:
+                seg_voice_val = vc
+                break
     if seg and seg.voice_profile_id:
         for vc in voice_choices:
             if f"({seg.voice_profile_id})" in vc:

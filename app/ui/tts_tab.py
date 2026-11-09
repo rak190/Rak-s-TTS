@@ -24,7 +24,28 @@ from app.utils.chunker import SentenceAwareChunker
 def get_available_profiles() -> List[str]:
     service = VoiceProfileService.get_instance()
     profiles = service.list_profiles()
-    return [f"{p.name} ({p.id})" for p in profiles] if profiles else ["Default Voice (No Profile)"]
+    # Verified voices first for TTS generation
+    verified = [p for p in profiles if p.validation_status == "verified"]
+    if not verified:
+        return ["Default Voice (No Profile)"]
+    choices = []
+    for p in verified:
+        star = "⭐ " if p.is_favorite else ""
+        trophy = "🏆 " if p.is_default else ""
+        label = p.display_name or p.name
+        cat = f" — {p.category.capitalize()}" if p.category else ""
+        choices.append(f"{trophy}{star}{label}{cat} ({p.id})")
+    return choices
+
+def get_default_profile_choice() -> Optional[str]:
+    service = VoiceProfileService.get_instance()
+    default_p = service.get_default_profile()
+    choices = get_available_profiles()
+    if default_p:
+        for c in choices:
+            if f"({default_p.id})" in c:
+                return c
+    return choices[0] if choices else None
 
 def on_text_changed(text: str):
     if not text:
@@ -261,7 +282,7 @@ def create_tts_tab():
 
             with gr.Column(scale=3, min_width=260, elem_classes=["tts-inspector"]):
                 gr.HTML("<div class='inspector-heading'><span class='eyebrow'>VOICE & DELIVERY</span><h2>Sound like you</h2></div><div class='voice-mark'><span>V</span><div><b>Voice profile</b><small>Choose a saved voice</small></div></div>")
-                profile_dropdown = gr.Dropdown(label="Voice", choices=profiles, value=profiles[0] if profiles else None)
+                profile_dropdown = gr.Dropdown(label="Voice", choices=profiles, value=get_default_profile_choice())
                 refresh_profiles_btn = gr.Button("Refresh voices", variant="secondary", size="sm")
                 cloning_mode_selector = gr.Radio(choices=["Ordinary TTS", "Voice Cloning", "Ultimate Cloning"], value="Ordinary TTS", label="Generation mode")
                 gr.HTML("<div class='inspector-rule'></div><div class='eyebrow'>ADVANCED</div>")
@@ -294,7 +315,10 @@ def create_tts_tab():
             fn=lambda mode: (gr.update(visible=mode == "Standard"), gr.update(visible=mode == "Long-form")),
             inputs=[workflow_mode_radio], outputs=[generate_hero_btn, longform_btn]
         )
-        refresh_profiles_btn.click(fn=lambda: gr.update(choices=get_available_profiles()), outputs=[profile_dropdown])
+        refresh_profiles_btn.click(
+            fn=lambda: gr.update(choices=get_available_profiles(), value=get_default_profile_choice()),
+            outputs=[profile_dropdown]
+        )
         cancel_btn.click(fn=cancel_current_generation, inputs=[active_tts_job], outputs=[execution_status_badge])
         chunk_analyze_btn.click(fn=analyze_longform_chunks, inputs=[script_editor], outputs=[chunk_preview_box])
         generate_hero_btn.click(fn=run_tts_generation, inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, execution_status_badge, telemetry_display, active_tts_job])

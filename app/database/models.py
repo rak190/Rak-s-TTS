@@ -19,6 +19,19 @@ class VoiceProfile:
     sample_rate: int = 48000
     created_at: str = field(default_factory=utc_iso_now)
     updated_at: str = field(default_factory=utc_iso_now)
+    display_name: str = ""
+    khmer_display_name: str = ""
+    category: str = "general"
+    gender: str = "unspecified"
+    speaking_style: str = "Natural"
+    origin: str = "user_created"
+    source_license: str = "Local User Audio"
+    preview_audio_path: Optional[str] = None
+    preview_type: str = "reference"
+    is_favorite: int = 0
+    is_default: int = 0
+    last_used_at: Optional[str] = None
+    validation_status: str = "verified"
 
 @dataclass
 class GenerationRecord:

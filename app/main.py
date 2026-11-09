@@ -115,9 +115,17 @@ def initialize_application():
     logger.info(f"Storage Directory: {STORAGE_DIR}")
     logger.info(f"Model Directory: {MODELS_DIR}")
     
-    # 1. Initialize Database & Schema v3
+    # 1. Initialize Database & Schema
     db = DatabaseManager.get_instance()
     logger.info("Database schema initialized and verified.")
+
+    # 1b. Seed curated Khmer Voice Collection
+    try:
+        from app.services.voice_service import VoiceProfileService
+        VoiceProfileService.get_instance().seed_khmer_voice_collection()
+        logger.info("Khmer Voice Collection and catalog verified.")
+    except Exception as e:
+        logger.warning(f"Voice collection seeding notice: {e}")
 
     # 2. Configure Model Manager CPU limits
     mgr = ModelManager.get_instance()

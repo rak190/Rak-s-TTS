@@ -48,7 +48,7 @@ class TestBatchQueueAndRecovery(unittest.TestCase):
             cursor = conn.cursor()
             cursor.execute("SELECT MAX(version) FROM schema_version")
             ver = cursor.fetchone()[0]
-            self.assertEqual(ver, 4, "Database must be at schema version 4.")
+            self.assertGreaterEqual(ver, 4, "Database must be at least schema version 4.")
 
             cursor.execute("PRAGMA table_info(jobs)")
             cols = {row[1] for row in cursor.fetchall()}

@@ -23,6 +23,8 @@ VOICES_DIR = STORAGE_DIR / "voices"
 REFERENCES_DIR = STORAGE_DIR / "references"
 GENERATED_DIR = STORAGE_DIR / "generated"
 LONGFORM_DIR = STORAGE_DIR / "longform"
+PROJECTS_DIR = STORAGE_DIR / "projects"
+IMPORTS_DIR = STORAGE_DIR / "imports"
 TEMP_DIR = STORAGE_DIR / "temp"
 LOGS_DIR = STORAGE_DIR / "logs"
 
@@ -49,5 +51,5 @@ SERVER_PORT = 7860
 SHARE_PUBLIC = False
 
 # Ensure all critical storage directories exist
-for path in [STORAGE_DIR, VOICES_DIR, REFERENCES_DIR, GENERATED_DIR, LONGFORM_DIR, TEMP_DIR, LOGS_DIR]:
+for path in [STORAGE_DIR, VOICES_DIR, REFERENCES_DIR, GENERATED_DIR, LONGFORM_DIR, PROJECTS_DIR, IMPORTS_DIR, TEMP_DIR, LOGS_DIR]:
     path.mkdir(parents=True, exist_ok=True)

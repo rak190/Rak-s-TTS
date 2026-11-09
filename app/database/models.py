@@ -121,3 +121,22 @@ class MasteringJobRecord:
     error_message: str = ""
     created_at: str = field(default_factory=utc_iso_now)
 
+@dataclass
+class ScriptProjectRecord:
+    id: str
+    title: str
+    project_json_path: str
+    topic: str = ""
+    source_filename: str = ""
+    source_copy_path: str = ""
+    scene_count: int = 0
+    completed_scenes: int = 0
+    planned_duration_sec: float = 0.0
+    actual_duration_sec: float = 0.0
+    status: str = "draft"
+    combined_wav_path: Optional[str] = None
+    combined_mp3_path: Optional[str] = None
+    created_at: str = field(default_factory=utc_iso_now)
+    updated_at: str = field(default_factory=utc_iso_now)
+
+

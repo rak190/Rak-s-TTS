@@ -19,6 +19,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         from app.ui.layout import build_app_ui
         from app.ui.dashboard_tab import create_dashboard_tab
         from app.ui.tts_tab import create_tts_tab
+        from app.ui.script_studio_tab import create_script_studio_tab
         from app.ui.queue_tab import create_queue_tab
         from app.ui.cloning_tab import create_cloning_tab
         from app.ui.library_tab import create_library_tab
@@ -29,6 +30,7 @@ class TestVoiceStudioUI(unittest.TestCase):
         self.assertTrue(callable(build_app_ui))
         self.assertTrue(callable(create_dashboard_tab))
         self.assertTrue(callable(create_tts_tab))
+        self.assertTrue(callable(create_script_studio_tab))
         self.assertTrue(callable(create_queue_tab))
         self.assertTrue(callable(create_cloning_tab))
         self.assertTrue(callable(create_mastering_tab))

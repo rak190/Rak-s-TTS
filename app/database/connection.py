@@ -14,7 +14,8 @@ from app.database.models import (
     QueueJob,
     LongformJob,
     LongformChunkRecord,
-    MasteringJobRecord
+    MasteringJobRecord,
+    ScriptProjectRecord
 )
 
 def utc_iso_now() -> str:
@@ -542,5 +543,77 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute("SELECT key, value FROM settings")
             return {row["key"]: row["value"] for row in cursor.fetchall()}
+
+    # -------------------------------------------------------------
+    # Script Projects Repository (Smart Script Studio)
+    # -------------------------------------------------------------
+    def create_script_project(self, project: ScriptProjectRecord) -> ScriptProjectRecord:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO script_projects (
+                    id, title, topic, source_filename, source_copy_path,
+                    project_json_path, scene_count, completed_scenes,
+                    planned_duration_sec, actual_duration_sec, status,
+                    combined_wav_path, combined_mp3_path, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    project.id, project.title, project.topic, project.source_filename,
+                    project.source_copy_path, project.project_json_path, project.scene_count,
+                    project.completed_scenes, project.planned_duration_sec, project.actual_duration_sec,
+                    project.status, project.combined_wav_path, project.combined_mp3_path,
+                    project.created_at, project.updated_at
+                )
+            )
+            return project
+
+    def get_script_project(self, project_id: str) -> Optional[ScriptProjectRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM script_projects WHERE id = ?", (project_id,))
+            row = cursor.fetchone()
+            if not row:
+                return None
+            return ScriptProjectRecord(**dict(row))
+
+    def update_script_project(self, project: ScriptProjectRecord) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                UPDATE script_projects SET
+                    title = ?, topic = ?, source_filename = ?, source_copy_path = ?,
+                    project_json_path = ?, scene_count = ?, completed_scenes = ?,
+                    planned_duration_sec = ?, actual_duration_sec = ?, status = ?,
+                    combined_wav_path = ?, combined_mp3_path = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (
+                    project.title, project.topic, project.source_filename, project.source_copy_path,
+                    project.project_json_path, project.scene_count, project.completed_scenes,
+                    project.planned_duration_sec, project.actual_duration_sec, project.status,
+                    project.combined_wav_path, project.combined_mp3_path, project.updated_at,
+                    project.id
+                )
+            )
+            return cursor.rowcount > 0
+
+    def list_script_projects(self, limit: int = 50) -> List[ScriptProjectRecord]:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM script_projects ORDER BY updated_at DESC LIMIT ?",
+                (limit,)
+            )
+            return [ScriptProjectRecord(**dict(row)) for row in cursor.fetchall()]
+
+    def delete_script_project(self, project_id: str) -> bool:
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM script_projects WHERE id = ?", (project_id,))
+            return cursor.rowcount > 0
+
 
 

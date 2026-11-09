@@ -136,6 +136,24 @@ CREATE TABLE IF NOT EXISTS mastering_jobs (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS script_projects (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    topic TEXT DEFAULT '',
+    source_filename TEXT DEFAULT '',
+    source_copy_path TEXT DEFAULT '',
+    project_json_path TEXT NOT NULL,
+    scene_count INTEGER DEFAULT 0,
+    completed_scenes INTEGER DEFAULT 0,
+    planned_duration_sec REAL DEFAULT 0.0,
+    actual_duration_sec REAL DEFAULT 0.0,
+    status TEXT DEFAULT 'draft',
+    combined_wav_path TEXT,
+    combined_mp3_path TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_generations_created ON generations(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_voice_profiles_created ON voice_profiles(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
@@ -143,6 +161,7 @@ CREATE INDEX IF NOT EXISTS idx_longform_jobs_created ON longform_jobs(created_at
 CREATE INDEX IF NOT EXISTS idx_longform_chunks_job ON longform_chunks(job_id, chunk_index);
 CREATE INDEX IF NOT EXISTS idx_mastering_jobs_created ON mastering_jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_mastering_jobs_source ON mastering_jobs(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_script_projects_updated ON script_projects(updated_at DESC);
 
 """
 

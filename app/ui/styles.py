@@ -553,5 +553,15 @@ STUDIO_PRO_CSS += r"""
 .queue-toolbar .gr-button { border-radius: 8px !important; font-size: 13px !important; font-weight: 600 !important; }
 .pending-jobs-table table, .history-jobs-table table { border-collapse: separate !important; border-spacing: 0 !important; width: 100% !important; border-radius: 10px !important; overflow: hidden !important; }
 .opt-in-warning { color: #f59e0b !important; font-size: 12px !important; margin-top: 6px !important; font-weight: 500 !important; }
+
+/* Smart Script Studio — 4-Zone Apple-Inspired Storyboard Workspace */
+.smart-script-workspace { max-width: 1460px; margin: 0 auto !important; gap: 20px !important; align-items: flex-start !important; }
+.smart-left-nav { background: var(--studio-surface) !important; border: 1px solid var(--studio-border-subtle) !important; border-radius: 14px !important; padding: 16px !important; }
+.smart-center-canvas { background: var(--studio-surface) !important; border: 1px solid var(--studio-border-subtle) !important; border-radius: 14px !important; padding: 20px !important; }
+.smart-right-inspector { background: var(--studio-surface) !important; border: 1px solid var(--studio-border-subtle) !important; border-radius: 14px !important; padding: 18px !important; }
+.smart-bottom-dock { max-width: 1460px; margin: 18px auto 0 !important; background: var(--studio-surface) !important; border: 1px solid var(--studio-border) !important; border-radius: 14px !important; padding: 18px 22px !important; }
+.dialogue-block-card { background: var(--studio-surface-card); border: 1px solid var(--studio-border-subtle); border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; }
+.dialogue-role-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 650; background: var(--studio-accent-subtle); color: var(--studio-accent); margin-right: 8px; }
+.production-excluded-box { background: rgba(143, 124, 242, 0.05); border: 1px dashed var(--studio-border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: var(--studio-text-secondary); }
 """
 IPHONE_INSPIRED_CSS = STUDIO_PRO_CSS

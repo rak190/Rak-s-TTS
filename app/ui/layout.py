@@ -5,6 +5,7 @@ from app.ui.dashboard_tab import create_dashboard_tab
 from app.ui.library_tab import create_library_tab
 from app.ui.cloning_tab import create_cloning_tab
 from app.ui.tts_tab import create_tts_tab
+from app.ui.script_studio_tab import create_script_studio_tab
 from app.ui.queue_tab import create_queue_tab
 from app.ui.mastering_tab import create_mastering_tab
 from app.ui.history_tab import create_history_tab
@@ -33,6 +34,7 @@ def build_app_ui(default_tab: Optional[str] = None) -> gr.Blocks:
 
         with gr.Tabs(selected=default_tab or "tab_tts", elem_classes=["main-studio-tabs"], overflow_behavior="wrap"):
             create_tts_tab()
+            create_script_studio_tab()
             create_queue_tab()
             create_cloning_tab()
             create_mastering_tab()

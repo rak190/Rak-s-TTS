@@ -100,15 +100,33 @@ class TestVoiceStudioUI(unittest.TestCase):
         self.assertIn("100% Local Inference", settings_md)
 
     def test_09_tts_tab_generator_and_cancel(self):
+        from unittest.mock import MagicMock, patch
+        from app.queue.generation_queue import GenerationQueue
+
         # Empty text error test
         gen = run_tts_generation("", "Ordinary TTS", "", 2.0, 10)
         first_yield = next(gen)
         self.assertIsNone(first_yield[0])
         self.assertIn("cannot be empty", first_yield[1])
+        self.assertIsNone(first_yield[3])
 
-        # Cancel when no active job
-        msg = cancel_current_generation()
-        self.assertIn("No active job", msg)
+        # A session without a TTS job must never cancel another queue job.
+        fake_queue = MagicMock()
+        fake_queue.get_job_display_status.return_value = {
+            "status": "cancelled", "badge": "Cancelled", "message": "Cancelled"
+        }
+        with patch.object(GenerationQueue, "get_instance", return_value=fake_queue):
+            self.assertIn("No active job", cancel_current_generation())
+            fake_queue.cancel_job.assert_not_called()
+
+            gen = run_tts_generation("A short script.", "Ordinary TTS", "", 2.0, 10)
+            queued = next(gen)
+            session_job_id = queued[3]
+            self.assertTrue(session_job_id.startswith("job_"))
+            self.assertIn("Cancellation requested", cancel_current_generation(session_job_id))
+            fake_queue.cancel_job.assert_called_once_with(session_job_id)
+            finished = next(gen)
+            self.assertIsNone(finished[3])
 
     def test_10_longform_ui_controls(self):
         from app.ui.tts_tab import analyze_longform_chunks, run_longform_synthesis

@@ -42,14 +42,14 @@ def on_text_changed(text: str):
         lang_str = lang.capitalize()
     return f"{lang_str} • {char_count} chars • ~{word_count} words"
 
-def cancel_current_generation():
+def cancel_current_generation(job_id: Optional[str] = None):
+    """Cancel only the standard TTS job started in this browser session."""
+    if not job_id:
+        return "ℹ️ No active job in this session."
     queue = GenerationQueue.get_instance()
-    stats = queue.get_queue_stats()
-    curr_id = stats.get("current_job_id")
-    if curr_id:
-        queue.cancel_job(curr_id)
-        return "🛑 Cancellation requested for active job."
-    return "ℹ️ No active job running."
+    if queue.cancel_job(job_id):
+        return "🛑 Cancellation requested for this speech job."
+    return "ℹ️ This speech job is no longer active."
 
 def run_tts_generation(
     text: str,
@@ -59,7 +59,7 @@ def run_tts_generation(
     timesteps: int
 ):
     if not text or not text.strip():
-        yield None, "Error: Target script cannot be empty.", "No telemetry available."
+        yield None, "Error: Target script cannot be empty.", "No telemetry available.", None
         return
 
     norm_text = TextProcessor.normalize_text(text)
@@ -85,15 +85,15 @@ def run_tts_generation(
     job_type = "tts"
     if mode == "Voice Cloning":
         if not ref_audio_path:
-            yield None, "Error: Voice Cloning requires selecting a Voice Profile with reference audio.", "No telemetry available."
+            yield None, "Error: Voice Cloning requires selecting a Voice Profile with reference audio.", "No telemetry available.", None
             return
         job_type = "cloning"
     elif mode == "Ultimate Cloning":
         if not ref_audio_path:
-            yield None, "Error: Ultimate Cloning requires a Voice Profile with reference audio.", "No telemetry available."
+            yield None, "Error: Ultimate Cloning requires a Voice Profile with reference audio.", "No telemetry available.", None
             return
         if not prompt_text or not prompt_text.strip():
-            yield None, "Error: Ultimate Cloning strictly requires an exact verbatim transcript for the reference segment. Please edit the profile transcript in Voice Library.", "No telemetry available."
+            yield None, "Error: Ultimate Cloning strictly requires an exact verbatim transcript for the reference segment. Please edit the profile transcript in Voice Library.", "No telemetry available.", None
             return
         job_type = "ultimate_cloning"
 
@@ -116,6 +116,8 @@ def run_tts_generation(
     queue = GenerationQueue.get_instance()
     queue.submit_task(task)
 
+    yield None, "⏳ Queued for synthesis", f"Job ID: `{job_id}`", job_id
+
     while True:
         status_info = queue.get_job_display_status(job_id)
         st = status_info["status"]
@@ -123,10 +125,10 @@ def run_tts_generation(
         msg = status_info["message"]
 
         if st in ("pending", "queued"):
-            yield None, badge, f"⏳ {msg}..."
+            yield None, badge, f"⏳ {msg}...", job_id
             time.sleep(0.5)
         elif st == "processing":
-            yield None, badge, f"⚙️ {msg} (Synthesizing on CPU 4 P-cores...)"
+            yield None, badge, f"⚙️ {msg} (Synthesizing on CPU 4 P-cores...)", job_id
             time.sleep(0.5)
         elif st == "completed":
             res = status_info.get("result") or task.result
@@ -139,16 +141,16 @@ def run_tts_generation(
 * Storage: `{res['output_path']}`
 """
                 status_msg = f"✅ Synthesized {res['duration_sec']}s audio in {res['generation_time_sec']}s (RTF: {res['rtf']}x)"
-                yield res['output_path'], status_msg, telemetry_md
+                yield res['output_path'], status_msg, telemetry_md, None
             else:
-                yield None, "✅ Completed", "Audio synthesized successfully."
+                yield None, "✅ Completed", "Audio synthesized successfully.", None
             break
         elif st == "failed":
             err = status_info.get("error_message") or task.error or "Unknown synthesis error"
-            yield None, "❌ Failed", f"### ❌ Generation Failed\n\n`{err}`"
+            yield None, "❌ Failed", f"### ❌ Generation Failed\n\n`{err}`", None
             break
         elif st == "cancelled":
-            yield None, "🚫 Cancelled", "Generation was cancelled."
+            yield None, "🚫 Cancelled", "Generation was cancelled.", None
             break
         else:
             time.sleep(0.5)
@@ -235,6 +237,7 @@ def create_tts_tab():
     """Build the TTS workstation while keeping generation callbacks unchanged."""
     profiles = get_available_profiles()
     with gr.Tab("Speech Studio", id="tab_tts"):
+        active_tts_job = gr.State(value=None)
         gr.HTML("""<header class="tts-page-head"><div><div class="eyebrow">VOICESTUDIO / CREATE</div><h1>Speech Studio</h1><p>Shape a script, choose a voice, and listen to the result.</p></div><div class="local-status"><i></i> Local studio <span>·</span> 48 kHz</div></header>""")
         with gr.Row(elem_classes=["tts-workspace"]):
             with gr.Column(scale=8, min_width=480, elem_classes=["tts-editor-column"]):
@@ -292,9 +295,9 @@ def create_tts_tab():
             inputs=[workflow_mode_radio], outputs=[generate_hero_btn, longform_btn]
         )
         refresh_profiles_btn.click(fn=lambda: gr.update(choices=get_available_profiles()), outputs=[profile_dropdown])
-        cancel_btn.click(fn=cancel_current_generation, outputs=[execution_status_badge])
+        cancel_btn.click(fn=cancel_current_generation, inputs=[active_tts_job], outputs=[execution_status_badge])
         chunk_analyze_btn.click(fn=analyze_longform_chunks, inputs=[script_editor], outputs=[chunk_preview_box])
-        generate_hero_btn.click(fn=run_tts_generation, inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, execution_status_badge, telemetry_display])
+        generate_hero_btn.click(fn=run_tts_generation, inputs=[script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, execution_status_badge, telemetry_display, active_tts_job])
         longform_btn.click(fn=run_longform_synthesis, inputs=[project_title_input, script_editor, cloning_mode_selector, profile_dropdown, cfg_slider, steps_slider], outputs=[main_audio_player, mp3_download_file, execution_status_badge, telemetry_display])
         add_to_queue_btn.click(
             fn=handle_add_to_batch,
